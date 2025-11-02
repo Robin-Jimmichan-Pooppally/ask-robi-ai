@@ -177,15 +177,14 @@ if prompt := st.chat_input("Ask about Robin's projects..."):
                 "content": response_text
             })
             
-            # Add TTS and Mute Controls
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                st.success("✅ Response complete!")
-            with col2:
-                if st.session_state.tts_enabled:
+            st.success("✅ Response complete!")
+            
+            # Auto-play TTS if enabled
+            if st.session_state.tts_enabled:
+                with st.spinner("🔊 Playing audio..."):
                     audio = speak_response(response_text)
                     if audio:
-                        st.audio(audio, format="audio/mp3")
+                        st.audio(audio, format="audio/mp3", autoplay=True)
         else:
             if st.session_state.api_error_count > 2:
                 st.warning("💡 Multiple errors detected. Please refresh and try again.")
