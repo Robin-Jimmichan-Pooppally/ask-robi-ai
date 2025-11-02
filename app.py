@@ -7,6 +7,8 @@ import streamlit as st
 from groq import Groq
 import time
 from datetime import datetime
+from gtts import gTTS
+import io
 
 # Import context from separate file
 from robi_context import ROBIN_CONTEXT
@@ -43,6 +45,9 @@ if "thinking_active" not in st.session_state:
 if "api_error_count" not in st.session_state:
     st.session_state.api_error_count = 0
 
+if "tts_enabled" not in st.session_state:
+    st.session_state.tts_enabled = False
+
 # ==================== GROQ CLIENT ====================
 @st.cache_resource
 def init_groq():
@@ -62,6 +67,19 @@ try:
 except Exception as e:
     st.error(f"Failed to initialize: {str(e)}")
     st.stop()
+
+# ==================== TTS FUNCTION ====================
+def speak_response(text):
+    """Convert text to speech using Google TTS"""
+    try:
+        tts = gTTS(text=text, lang='en', slow=False)
+        audio_fp = io.BytesIO()
+        tts.write_to_fp(audio_fp)
+        audio_fp.seek(0)
+        return audio_fp
+    except Exception as e:
+        st.warning(f"TTS Error: {str(e)}")
+        return None
 
 # ==================== STREAMING RESPONSE ====================
 def stream_llm_response(prompt: str, placeholder) -> tuple:
@@ -158,7 +176,16 @@ if prompt := st.chat_input("Ask about Robin's projects..."):
                 "role": "assistant",
                 "content": response_text
             })
-            st.success("✅ Response complete!")
+            
+            # Add TTS and Mute Controls
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.success("✅ Response complete!")
+            with col2:
+                if st.session_state.tts_enabled:
+                    audio = speak_response(response_text)
+                    if audio:
+                        st.audio(audio, format="audio/mp3")
         else:
             if st.session_state.api_error_count > 2:
                 st.warning("💡 Multiple errors detected. Please refresh and try again.")
@@ -168,6 +195,12 @@ if prompt := st.chat_input("Ask about Robin's projects..."):
 # ==================== SIDEBAR ====================
 with st.sidebar:
     st.markdown("### ⚙️ Settings")
+    
+    st.session_state.tts_enabled = st.toggle(
+        "🔊 Enable Text-to-Speech",
+        value=st.session_state.tts_enabled,
+        help="Convert AI responses to audio"
+    )
     
     st.markdown("---")
     st.markdown("### 📚 About")
