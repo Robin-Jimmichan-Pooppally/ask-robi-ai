@@ -7,6 +7,8 @@ import streamlit as st
 from groq import Groq
 import time
 from datetime import datetime
+from gtts import gTTS
+import io
 import base64
 
 # Import context from separate file
@@ -69,51 +71,15 @@ except Exception as e:
 
 # ==================== TTS FUNCTION ====================
 def speak_response(text):
-    """Use browser's native Web Speech API with male voice"""
+    """Convert text to speech using Google TTS"""
     try:
-        # Escape quotes and newlines in text
-        safe_text = text.replace('"', '\\"').replace('\n', ' ')
-        
-        # JavaScript for Web Speech API with male voice
-        js_code = f"""
-        <script>
-            setTimeout(function() {{
-                var text = "{safe_text}";
-                var utterance = new SpeechSynthesisUtterance(text);
-                utterance.rate = 0.9;
-                utterance.pitch = 0.7;
-                utterance.volume = 1.0;
-                
-                // Try to get male voice
-                var voices = window.speechSynthesis.getVoices();
-                console.log("Available voices:", voices.length);
-                
-                for(var i = 0; i < voices.length; i++) {{
-                    console.log(voices[i].name);
-                    if(voices[i].name.includes('Male') || 
-                       voices[i].name.includes('male') || 
-                       voices[i].name.includes('David') || 
-                       voices[i].name.includes('Mark') ||
-                       voices[i].name.includes('Google UK English Male')) {{
-                        utterance.voice = voices[i];
-                        console.log("Selected voice:", voices[i].name);
-                        break;
-                    }}
-                }}
-                
-                // Fallback to first male-like voice
-                if(!utterance.voice && voices.length > 0) {{
-                    utterance.voice = voices[0];
-                }}
-                
-                window.speechSynthesis.cancel();
-                window.speechSynthesis.speak(utterance);
-                console.log("Speaking...");
-            }}, 100);
-        </script>
-        """
-        return js_code
+        tts = gTTS(text=text, lang='en', slow=False)
+        audio_fp = io.BytesIO()
+        tts.write_to_fp(audio_fp)
+        audio_fp.seek(0)
+        return audio_fp
     except Exception as e:
+        st.warning(f"TTS Error: {str(e)}")
         return None
 
 # ==================== STREAMING RESPONSE ====================
@@ -212,20 +178,20 @@ if prompt := st.chat_input("Ask about Robin's projects..."):
                 "content": response_text
             })
             
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                st.success("✅ Response complete!")
-            with col2:
-                if st.session_state.tts_enabled:
-                    if st.button("🔊 Play", key=f"play_{len(st.session_state.messages)}"):
-                        js_code = speak_response(response_text)
-                        if js_code:
-                            st.markdown(js_code, unsafe_allow_html=True)
-                    else:
-                        # Auto-play on first load
-                        js_code = speak_response(response_text)
-                        if js_code:
-                            st.markdown(js_code, unsafe_allow_html=True)
+            st.success("✅ Response complete!")
+            
+            # Auto-play TTS if enabled
+            if st.session_state.tts_enabled:
+                audio = speak_response(response_text)
+                if audio:
+                    audio_base64 = base64.b64encode(audio.getvalue()).decode()
+                    audio_html = f"""
+                    <script>
+                        var audio = new Audio('data:audio/mp3;base64,{audio_base64}');
+                        audio.play();
+                    </script>
+                    """
+                    st.markdown(audio_html, unsafe_allow_html=True)
         else:
             if st.session_state.api_error_count > 2:
                 st.warning("💡 Multiple errors detected. Please refresh and try again.")
