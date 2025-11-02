@@ -198,11 +198,13 @@ if prompt := st.chat_input("Ask about Robin's projects..."):
 with st.sidebar:
     st.markdown("### ⚙️ Settings")
     
-    st.session_state.tts_enabled = st.toggle(
+    # TTS Toggle
+    tts_toggle = st.toggle(
         "🔊 Enable Text-to-Speech",
-        value=st.session_state.tts_enabled,
+        value=False,
         help="Convert AI responses to audio"
     )
+    st.session_state.tts_enabled = tts_toggle
     
     st.markdown("---")
     st.markdown("### 📚 About")
