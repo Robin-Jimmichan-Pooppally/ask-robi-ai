@@ -46,12 +46,7 @@ if "api_error_count" not in st.session_state:
 # ==================== GROQ CLIENT ====================
 @st.cache_resource
 def init_groq():
-    try:
-        if "GROQ_API_KEY" not in st.secrets:
-            return None
-        return Groq(api_key=st.secrets["GROQ_API_KEY"])
-    except:
-        return None
+    return Groq(api_key=st.secrets["GROQ_API_KEY"])
 
 client = init_groq()
 
@@ -127,10 +122,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.write("👋 Hi! I'm Robin's AI assistant. Ask me about his **21 projects** across **Excel, SQL, Power BI, and Python**!")
-
-if client is None:
-    st.error("⚠️ GROQ_API_KEY not found in secrets. Please add it to .streamlit/secrets.toml")
-    st.stop()
 
 # Display chat history
 for message in st.session_state.messages:
