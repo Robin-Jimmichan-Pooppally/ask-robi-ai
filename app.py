@@ -7,9 +7,6 @@ import streamlit as st
 from groq import Groq
 import time
 from datetime import datetime
-from gtts import gTTS
-import io
-import base64
 
 # Import context from separate file
 from robi_context import ROBIN_CONTEXT
@@ -71,23 +68,22 @@ except Exception as e:
 
 # ==================== TTS FUNCTION ====================
 def speak_response(text):
-    """Convert text to speech using Google TTS"""
+    """Use browser's native Web Speech API"""
     try:
-        # Clean text
-        clean_text = text[:200]  # Limit to 200 chars for faster processing
+        # Escape special characters
+        safe_text = text.replace('"', '\\"').replace('\n', ' ')
         
-        # Generate TTS
-        tts = gTTS(text=clean_text, lang='en', slow=False)
-        audio_fp = io.BytesIO()
-        tts.write_to_fp(audio_fp)
-        audio_fp.seek(0)
-        
-        if audio_fp.getbuffer().nbytes == 0:
-            return None
-        
-        return audio_fp
+        js_code = f"""
+        <script>
+            var utterance = new SpeechSynthesisUtterance("{safe_text}");
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            utterance.volume = 1.0;
+            window.speechSynthesis.speak(utterance);
+        </script>
+        """
+        return js_code
     except Exception as e:
-        print(f"TTS Error: {str(e)}")
         return None
 
 # ==================== STREAMING RESPONSE ====================
@@ -191,17 +187,10 @@ if prompt := st.chat_input("Ask about Robin's projects..."):
                 st.success("✅ Response complete!")
             with col2:
                 if st.session_state.tts_enabled:
-                    try:
-                        if st.button("🔊 Speak", key=f"speak_{len(st.session_state.messages)}"):
-                            st.info("⏳ Generating audio...")
-                            audio = speak_response(response_text)
-                            if audio:
-                                st.success("✅ Audio ready!")
-                                st.audio(audio, format="audio/mp3")
-                            else:
-                                st.error("❌ Failed to generate audio")
-                    except Exception as e:
-                        st.error(f"❌ TTS Error: {str(e)}")
+                    if st.button("🔊 Speak", key=f"speak_{len(st.session_state.messages)}"):
+                        js_code = speak_response(response_text)
+                        if js_code:
+                            st.markdown(js_code, unsafe_allow_html=True)
         else:
             if st.session_state.api_error_count > 2:
                 st.warning("💡 Multiple errors detected. Please refresh and try again.")
