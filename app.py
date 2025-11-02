@@ -7,10 +7,7 @@ import streamlit as st
 from groq import Groq
 import time
 from datetime import datetime
-import io
 import base64
-import pyttsx3
-from io import BytesIO
 
 # Import context from separate file
 from robi_context import ROBIN_CONTEXT
@@ -72,37 +69,32 @@ except Exception as e:
 
 # ==================== TTS FUNCTION ====================
 def speak_response(text):
-    """Convert text to speech with MALE voice using pyttsx3"""
+    """Use browser's native Web Speech API with male voice"""
     try:
-        engine = pyttsx3.init()
-        
-        # Set male voice
-        voices = engine.getProperty('voices')
-        for voice in voices:
-            if 'male' in voice.name.lower() or voice.id.endswith('David') or voice.id.endswith('Mark'):
-                engine.setProperty('voice', voice.id)
-                break
-        
-        # Set speech properties
-        engine.setProperty('rate', 150)  # Speed
-        engine.setProperty('volume', 1.0)  # Volume
-        
-        # Save to bytes
-        audio_fp = BytesIO()
-        engine.save_to_file(text, 'temp_audio.mp3')
-        engine.runAndWait()
-        
-        # Read the file
-        try:
-            with open('temp_audio.mp3', 'rb') as f:
-                audio_fp = BytesIO(f.read())
-            import os
-            os.remove('temp_audio.mp3')
-            return audio_fp
-        except:
-            return None
+        # JavaScript for Web Speech API with male voice
+        js_code = f"""
+        <script>
+            var text = `{text}`;
+            var utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1.0;
+            utterance.pitch = 0.8;
+            utterance.volume = 1.0;
+            
+            // Set male voice
+            var voices = speechSynthesis.getVoices();
+            for(var i = 0; i < voices.length; i++) {{
+                if(voices[i].name.includes('Male') || voices[i].name.includes('David') || voices[i].name.includes('Mark')) {{
+                    utterance.voice = voices[i];
+                    break;
+                }}
+            }}
+            
+            speechSynthesis.cancel();
+            speechSynthesis.speak(utterance);
+        </script>
+        """
+        return js_code
     except Exception as e:
-        st.warning(f"TTS Error: {str(e)}")
         return None
 
 # ==================== STREAMING RESPONSE ====================
@@ -203,28 +195,12 @@ if prompt := st.chat_input("Ask about Robin's projects..."):
             
             st.success("✅ Response complete!")
             
-            # Auto-play TTS if enabled - Generate immediately
+            # Auto-play TTS if enabled - using Web Speech API
             if st.session_state.tts_enabled:
-                st.info("🔊 Generating and playing audio...")
-                try:
-                    audio = speak_response(response_text)
-                    if audio:
-                        import base64
-                        audio_base64 = base64.b64encode(audio.getvalue()).decode()
-                        
-                        # Use JavaScript to auto-play
-                        audio_html = f"""
-                        <script>
-                            var audio = new Audio('data:audio/mp3;base64,{audio_base64}');
-                            audio.play();
-                        </script>
-                        <audio controls style="width:100%;">
-                            <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
-                        </audio>
-                        """
-                        st.markdown(audio_html, unsafe_allow_html=True)
-                except Exception as e:
-                    st.warning(f"Audio error: {str(e)}")
+                st.info("🔊 Playing audio...")
+                js_code = speak_response(response_text)
+                if js_code:
+                    st.markdown(js_code, unsafe_allow_html=True)
         else:
             if st.session_state.api_error_count > 2:
                 st.warning("💡 Multiple errors detected. Please refresh and try again.")
