@@ -46,9 +46,22 @@ if "api_error_count" not in st.session_state:
 # ==================== GROQ CLIENT ====================
 @st.cache_resource
 def init_groq():
-    return Groq(api_key=st.secrets["GROQ_API_KEY"])
+    try:
+        api_key = st.secrets.get("GROQ_API_KEY")
+        if not api_key:
+            st.error("❌ GROQ_API_KEY is empty in Streamlit Cloud Secrets!")
+            st.stop()
+        return Groq(api_key=api_key)
+    except Exception as e:
+        st.error(f"❌ Groq Connection Error: {str(e)}")
+        st.info("Make sure your GROQ_API_KEY is correct in Streamlit Cloud Secrets")
+        st.stop()
 
-client = init_groq()
+try:
+    client = init_groq()
+except Exception as e:
+    st.error(f"Failed to initialize: {str(e)}")
+    st.stop()
 
 # ==================== STREAMING RESPONSE ====================
 def stream_llm_response(prompt: str, placeholder) -> tuple:
