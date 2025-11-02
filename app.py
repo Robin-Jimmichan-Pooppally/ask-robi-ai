@@ -7,9 +7,10 @@ import streamlit as st
 from groq import Groq
 import time
 from datetime import datetime
-from gtts import gTTS
 import io
 import base64
+import pyttsx3
+from io import BytesIO
 
 # Import context from separate file
 from robi_context import ROBIN_CONTEXT
@@ -71,14 +72,35 @@ except Exception as e:
 
 # ==================== TTS FUNCTION ====================
 def speak_response(text):
-    """Convert text to speech using Google TTS with male voice"""
+    """Convert text to speech with MALE voice using pyttsx3"""
     try:
-        # Use male voice (tld='co.uk' or 'com' with slow=False gives deeper voice)
-        tts = gTTS(text=text, lang='en', slow=False, tld='co.uk')
-        audio_fp = io.BytesIO()
-        tts.write_to_fp(audio_fp)
-        audio_fp.seek(0)
-        return audio_fp
+        engine = pyttsx3.init()
+        
+        # Set male voice
+        voices = engine.getProperty('voices')
+        for voice in voices:
+            if 'male' in voice.name.lower() or voice.id.endswith('David') or voice.id.endswith('Mark'):
+                engine.setProperty('voice', voice.id)
+                break
+        
+        # Set speech properties
+        engine.setProperty('rate', 150)  # Speed
+        engine.setProperty('volume', 1.0)  # Volume
+        
+        # Save to bytes
+        audio_fp = BytesIO()
+        engine.save_to_file(text, 'temp_audio.mp3')
+        engine.runAndWait()
+        
+        # Read the file
+        try:
+            with open('temp_audio.mp3', 'rb') as f:
+                audio_fp = BytesIO(f.read())
+            import os
+            os.remove('temp_audio.mp3')
+            return audio_fp
+        except:
+            return None
     except Exception as e:
         st.warning(f"TTS Error: {str(e)}")
         return None
