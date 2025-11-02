@@ -178,20 +178,16 @@ if prompt := st.chat_input("Ask about Robin's projects..."):
                 "content": response_text
             })
             
-            st.success("✅ Response complete!")
-            
-            # Auto-play TTS if enabled
-            if st.session_state.tts_enabled:
-                audio = speak_response(response_text)
-                if audio:
-                    audio_base64 = base64.b64encode(audio.getvalue()).decode()
-                    audio_html = f"""
-                    <script>
-                        var audio = new Audio('data:audio/mp3;base64,{audio_base64}');
-                        audio.play();
-                    </script>
-                    """
-                    st.markdown(audio_html, unsafe_allow_html=True)
+            col1, col2 = st.columns([4, 1])
+            with col1:
+                st.success("✅ Response complete!")
+            with col2:
+                if st.session_state.tts_enabled:
+                    if st.button("🔊 Speak", key=f"speak_{len(st.session_state.messages)}"):
+                        st.info("Generating audio...")
+                        audio = speak_response(response_text)
+                        if audio:
+                            st.audio(audio, format="audio/mp3")
         else:
             if st.session_state.api_error_count > 2:
                 st.warning("💡 Multiple errors detected. Please refresh and try again.")
