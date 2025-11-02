@@ -9,6 +9,7 @@ import time
 from datetime import datetime
 from gtts import gTTS
 import io
+import base64
 
 # Import context from separate file
 from robi_context import ROBIN_CONTEXT
@@ -181,10 +182,21 @@ if prompt := st.chat_input("Ask about Robin's projects..."):
             
             # Auto-play TTS if enabled
             if st.session_state.tts_enabled:
-                with st.spinner("🔊 Playing audio..."):
-                    audio = speak_response(response_text)
-                    if audio:
-                        st.audio(audio, format="audio/mp3", autoplay=True)
+                try:
+                    with st.spinner("🔊 Generating audio..."):
+                        audio = speak_response(response_text)
+                        if audio:
+                            # Convert to base64 for autoplay
+                            import base64
+                            audio_base64 = base64.b64encode(audio.getvalue()).decode()
+                            audio_html = f"""
+                            <audio autoplay>
+                                <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
+                            </audio>
+                            """
+                            st.markdown(audio_html, unsafe_allow_html=True)
+                except Exception as e:
+                    st.warning(f"Audio playback error: {str(e)}")
         else:
             if st.session_state.api_error_count > 2:
                 st.warning("💡 Multiple errors detected. Please refresh and try again.")
