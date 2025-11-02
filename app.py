@@ -7,6 +7,8 @@ import streamlit as st
 from groq import Groq
 import time
 from datetime import datetime
+from gtts import gTTS
+import io
 
 # Import context from separate file
 from robi_context import ROBIN_CONTEXT
@@ -68,22 +70,15 @@ except Exception as e:
 
 # ==================== TTS FUNCTION ====================
 def speak_response(text):
-    """Use browser's native Web Speech API"""
+    """Convert text to speech using Google TTS"""
     try:
-        # Escape special characters
-        safe_text = text.replace('"', '\\"').replace('\n', ' ')
-        
-        js_code = f"""
-        <script>
-            var utterance = new SpeechSynthesisUtterance("{safe_text}");
-            utterance.rate = 1.0;
-            utterance.pitch = 1.0;
-            utterance.volume = 1.0;
-            window.speechSynthesis.speak(utterance);
-        </script>
-        """
-        return js_code
+        tts = gTTS(text=text, lang='en', slow=False)
+        audio_fp = io.BytesIO()
+        tts.write_to_fp(audio_fp)
+        audio_fp.seek(0)
+        return audio_fp
     except Exception as e:
+        st.error(f"TTS Error: {str(e)}")
         return None
 
 # ==================== STREAMING RESPONSE ====================
@@ -153,7 +148,7 @@ st.markdown("""
     <div style="text-align: center; padding: 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; margin-bottom: 2rem;">
         <h1 style="color: white; margin: 0; font-size: 2.5rem;">🤖 Ask Robi.AI</h1>
         <p style="color: #f0f0f0; margin-top: 0.5rem;">Your Interactive Guide to Robin's 21 Business Analytics Projects</p>
-        <p style="color: #e0e0e0; margin-top: 1rem; font-size: 0.9rem;">Powered by Groq Llama 3.3 • Streaming ⚡</p>
+        <p style="color: #e0e0e0; margin-top: 1rem; font-size: 0.9rem;">Powered by Groq Llama 3.3 • Streaming ⚡ • TTS 🔊</p>
     </div>
 """, unsafe_allow_html=True)
 
@@ -182,15 +177,14 @@ if prompt := st.chat_input("Ask about Robin's projects..."):
                 "content": response_text
             })
             
-            col1, col2 = st.columns([4, 1])
-            with col1:
-                st.success("✅ Response complete!")
-            with col2:
-                if st.session_state.tts_enabled:
-                    if st.button("🔊 Speak", key=f"speak_{len(st.session_state.messages)}"):
-                        js_code = speak_response(response_text)
-                        if js_code:
-                            st.markdown(js_code, unsafe_allow_html=True)
+            st.success("✅ Response complete!")
+            
+            # Show audio if TTS is enabled
+            if st.session_state.tts_enabled:
+                with st.spinner("🔊 Generating audio..."):
+                    audio = speak_response(response_text)
+                    if audio:
+                        st.audio(audio, format="audio/mp3")
         else:
             if st.session_state.api_error_count > 2:
                 st.warning("💡 Multiple errors detected. Please refresh and try again.")
@@ -202,12 +196,11 @@ with st.sidebar:
     st.markdown("### ⚙️ Settings")
     
     # TTS Toggle
-    tts_toggle = st.toggle(
+    st.session_state.tts_enabled = st.toggle(
         "🔊 Enable Text-to-Speech",
-        value=False,
+        value=st.session_state.tts_enabled,
         help="Convert AI responses to audio"
     )
-    st.session_state.tts_enabled = tts_toggle
     
     st.markdown("---")
     st.markdown("### 📚 About")
