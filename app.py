@@ -71,9 +71,10 @@ except Exception as e:
 
 # ==================== TTS FUNCTION ====================
 def speak_response(text):
-    """Convert text to speech using Google TTS"""
+    """Convert text to speech using Google TTS with male voice"""
     try:
-        tts = gTTS(text=text, lang='en', slow=False)
+        # Use male voice (tld='co.uk' or 'com' with slow=False gives deeper voice)
+        tts = gTTS(text=text, lang='en', slow=False, tld='co.uk')
         audio_fp = io.BytesIO()
         tts.write_to_fp(audio_fp)
         audio_fp.seek(0)
@@ -180,23 +181,28 @@ if prompt := st.chat_input("Ask about Robin's projects..."):
             
             st.success("✅ Response complete!")
             
-            # Auto-play TTS if enabled
+            # Auto-play TTS if enabled - Generate immediately
             if st.session_state.tts_enabled:
+                st.info("🔊 Generating and playing audio...")
                 try:
-                    with st.spinner("🔊 Generating audio..."):
-                        audio = speak_response(response_text)
-                        if audio:
-                            # Convert to base64 for autoplay
-                            import base64
-                            audio_base64 = base64.b64encode(audio.getvalue()).decode()
-                            audio_html = f"""
-                            <audio autoplay>
-                                <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
-                            </audio>
-                            """
-                            st.markdown(audio_html, unsafe_allow_html=True)
+                    audio = speak_response(response_text)
+                    if audio:
+                        import base64
+                        audio_base64 = base64.b64encode(audio.getvalue()).decode()
+                        
+                        # Use JavaScript to auto-play
+                        audio_html = f"""
+                        <script>
+                            var audio = new Audio('data:audio/mp3;base64,{audio_base64}');
+                            audio.play();
+                        </script>
+                        <audio controls style="width:100%;">
+                            <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
+                        </audio>
+                        """
+                        st.markdown(audio_html, unsafe_allow_html=True)
                 except Exception as e:
-                    st.warning(f"Audio playback error: {str(e)}")
+                    st.warning(f"Audio error: {str(e)}")
         else:
             if st.session_state.api_error_count > 2:
                 st.warning("💡 Multiple errors detected. Please refresh and try again.")
