@@ -263,7 +263,7 @@ for i, proj in enumerate(PROJECTS_INDEX[:12]):  # show first 12 for speed; rest 
         c1, c2, c3 = st.columns([1, 1, 1])
 
         with c1:
-            if st.button("🔗 Open Repo", key=f"open_{proj['id']}"):
+if st.button("🔗 Open Repo", key=f"open_{proj['title']}"):
                 st.experimental_set_query_params(repo=proj['repo'])
                 st.write(f"[Open repository]({proj['repo']})")
         with c2:
