@@ -1,127 +1,126 @@
 import streamlit as st
-from groq import Groq
 import requests
-import pandas as pd
-from gtts import gTTS
-import base64
-import io
+import json
 
-# --- Page Config ---
+# -----------------------
+# Page Config
+# -----------------------
 st.set_page_config(page_title="Portfoli-AI", page_icon="🤖", layout="wide")
 
 # --- Header ---
 col1, col2 = st.columns([4, 1])
 with col1:
-    st.markdown(
-        "<h2 style='text-align:center;'>🤖 Portfoli-AI — Robin Jimmichan’s Portfolio Assistant</h2>",
-        unsafe_allow_html=True
-    )
+    st.markdown("<h2 style='text-align: center; color:#00FFFF; text-shadow: 0 0 15px #00FFFF;'>🤖 Portfoli-AI — Robin Jimmichan’s Portfolio Assistant</h2>", unsafe_allow_html=True)
 with col2:
     if st.button("🧹 Clear Chat"):
         st.session_state["chat_history"] = []
-        st.session_state["mode"] = "Portfolio"
+        st.session_state["history"] = []
+        st.session_state["greeted"] = False
         st.rerun()
 
-# --- Initialize Session State ---
-if "chat_history" not in st.session_state:
-    st.session_state["chat_history"] = []
-if "mode" not in st.session_state:
-    st.session_state["mode"] = "Portfolio"
+# -----------------------
+# Chat history initialization + Greeting
+# -----------------------
+if "history" not in st.session_state:
+    st.session_state.history = []
+if "selected_project" not in st.session_state:
+    st.session_state.selected_project = None
+if "readme_full" not in st.session_state:
+    st.session_state.readme_full = None
+if "readme_preview" not in st.session_state:
+    st.session_state.readme_preview = None
+if "show_more" not in st.session_state:
+    st.session_state.show_more = False
+if "greeted" not in st.session_state:
+    st.session_state.greeted = False
 
-# --- Greeting ---
-if not st.session_state["chat_history"]:
-    st.markdown("👋 **Hey Robin!** I’m your AI-powered portfolio assistant — ask me about your projects or anything in Business Analytics.")
+# ✅ Greeting message (only once, glowing)
+if not st.session_state.greeted:
+    greeting_html = """
+    <div style='
+        border-radius: 15px;
+        padding: 18px;
+        background: rgba(0, 255, 255, 0.1);
+        border: 1px solid rgba(0,255,255,0.3);
+        box-shadow: 0 0 15px rgba(0,255,255,0.4);
+        font-family: "Inter", sans-serif;
+    '>
+        <h4 style='color:#00FFFF;'>👋 Hey Robin!</h4>
+        <p style='color:white;'>
+        I'm <b style='color:#00FFFF;'>Portfoli-AI 🤖</b>, your glowing digital portfolio assistant.<br><br>
+        You can ask me anything about your <b>projects</b>, <b>skills</b>, or <b>business analytics insights</b>.<br>
+        Start by selecting a project from the sidebar or simply say: <i>"Explain my churn analysis project."</i>
+        </p>
+    </div>
+    """
+    st.markdown(greeting_html, unsafe_allow_html=True)
+    st.session_state.history.append({
+        "role": "assistant",
+        "content": "👋 Hey Robin! I'm Portfoli-AI 🤖, your glowing portfolio assistant."
+    })
+    st.session_state.greeted = True
 
-# --- Sidebar: Info ---
-st.sidebar.markdown("### 👤 Robin Jimmichan")
-st.sidebar.markdown("[📧 Email](mailto:rjimmichan@gmail.com)")
-st.sidebar.markdown("[💼 LinkedIn](https://www.linkedin.com/in/robin-jimmichan-pooppally-676061291)")
-st.sidebar.markdown("[🐙 GitHub](https://github.com/Robin-Jimmichan-Pooppally)")
+# -----------------------
+# Project Dictionary
+# -----------------------
+projects = {
+    "Excel": {
+        "Telco Customer Churn Analysis": "https://github.com/Robin-Jimmichan-Pooppally/Telco-Customer-Churn-Analysis-Excel-Project",
+        "Sales Performance Analysis": "https://github.com/Robin-Jimmichan-Pooppally/Sales-Performance-Analysis-Excel-Project",
+        "Marketing Campaign Analysis": "https://github.com/Robin-Jimmichan-Pooppally/Marketing-Campaign-Analysis-Excel-Project",
+        "HR Analytics Dashboard": "https://github.com/Robin-Jimmichan-Pooppally/HR-Analytics-Excel-Project",
+        "E-commerce Sales Analysis": "https://github.com/Robin-Jimmichan-Pooppally/E-commerce-Sales-Analysis-Excel-Project",
+        "Bank Customer Analysis": "https://github.com/Robin-Jimmichan-Pooppally/Bank-Customer-Analysis-Excel-Project",
+    },
+    "Power BI": {
+        "E-commerce Funnel Analysis": "https://github.com/Robin-Jimmichan-Pooppally/E-commerce-Funnel-Analysis-PowerBI-Project",
+        "Customer 360 Dashboard": "https://github.com/Robin-Jimmichan-Pooppally/Customer-360-Dashboard-PowerBI-Project",
+        "Retail Sales Dashboard": "https://github.com/Robin-Jimmichan-Pooppally/Retail-Sales-Dashboard-PowerBI-Project",
+        "Telco Customer Churn Dashboard": "https://github.com/Robin-Jimmichan-Pooppally/Telco-Customer-Churn-Dashboard-PowerBI-Project",
+        "Financial Performance Dashboard": "https://github.com/Robin-Jimmichan-Pooppally/Financial-Performance-Dashboard-PowerBI-Project",
+    },
+    "Python": {
+        "Retail Customer Segmentation": "https://github.com/Robin-Jimmichan-Pooppally/Retail-Customer-Segmentation-Python-Project",
+        "Healthcare Patient Analytics": "https://github.com/Robin-Jimmichan-Pooppally/Healthcare-Patient-Analytics-Python-Project",
+        "Airbnb NYC Price Analysis": "https://github.com/Robin-Jimmichan-Pooppally/Airbnb-NYC-Price-Analysis-Python-Project",
+        "Sales Forecasting Time Series": "https://github.com/Robin-Jimmichan-Pooppally/Sales-Forecasting-Time-Series-Python-Project",
+    },
+    "SQL": {
+        "Healthcare Claims Analysis": "https://github.com/Robin-Jimmichan-Pooppally/Healthcare-Claims-Analysis-SQL-Project",
+        "Bank Customer Segmentation": "https://github.com/Robin-Jimmichan-Pooppally/Bank-Customer-Segmentation-SQL-Project",
+        "Telco Churn Analysis": "https://github.com/Robin-Jimmichan-Pooppally/Telco-Churn-Analysis-SQL-Project",
+        "Inventory Supplier Analysis": "https://github.com/Robin-Jimmichan-Pooppally/Inventory-Supplier-Analysis-SQL-Project",
+        "Hospital Patient Analysis": "https://github.com/Robin-Jimmichan-Pooppally/Hospital-Patient-Analysis-SQL-Project",
+        "Loan Default Prediction": "https://github.com/Robin-Jimmichan-Pooppally/Loan-Default-Prediction-SQL-Project",
+    }
+}
 
-# --- Sidebar: Mode Switch ---
-st.sidebar.markdown("### 🧠 Assistant Mode")
-mode_choice = st.sidebar.radio("Select mode:", ["Portfolio Guide", "Business Analytics Expert"])
-st.session_state["mode"] = "Portfolio" if mode_choice == "Portfolio Guide" else "Business Analytics"
+# -----------------------
+# Sidebar - Filter & Selection
+# -----------------------
+selected_category = st.sidebar.radio("📂 Filter by Category", list(projects.keys()))
+selected_project = st.sidebar.selectbox("🔍 Choose a Project", list(projects[selected_category].keys()))
 
-# --- GitHub Repo Fetch ---
-@st.cache_data(show_spinner=False)
-def fetch_repos(user):
-    url = f"https://api.github.com/users/{user}/repos"
-    r = requests.get(url)
-    if r.status_code == 200:
-        repos = r.json()
-        filtered = [repo for repo in repos if any(k in repo["name"].lower() for k in ["project", "dashboard", "analysis"])]
-        return {repo["name"]: repo["html_url"] for repo in filtered}
+if selected_project:
+    repo_url = projects[selected_category][selected_project]
+    st.markdown(f"### 🔗 [{selected_project}]({repo_url})")
+
+# -----------------------
+# Chat Section
+# -----------------------
+for message in st.session_state.history:
+    role = message["role"]
+    content = message["content"]
+    if role == "user":
+        st.chat_message("user").markdown(content)
     else:
-        return {}
+        st.chat_message("assistant").markdown(content)
 
-repos = fetch_repos("Robin-Jimmichan-Pooppally")
+if prompt := st.chat_input("Ask about this project or your portfolio..."):
+    st.chat_message("user").markdown(prompt)
+    st.session_state.history.append({"role": "user", "content": prompt})
 
-# --- Project Selection ---
-if repos:
-    st.markdown("### 📂 Choose a Project Repository")
-    project_name = st.selectbox("Select a project:", list(repos.keys()))
-    project_url = repos[project_name]
-    st.markdown(f"[🔗 Open {project_name}]({project_url})")
-
-# --- Groq Client Setup ---
-try:
-    client = Groq(api_key=st.secrets["GROQ_API_KEY"])
-except Exception:
-    st.error("🚨 Groq API Key not found! Please add it under Settings → Secrets as GROQ_API_KEY.")
-    st.stop()
-
-# --- Chat Input ---
-user_input = st.chat_input("Ask me anything about your projects or Business Analytics...")
-
-if user_input:
-    with st.chat_message("user"):
-        st.write(user_input)
-
-    # Determine mode context
-    context_prompt = (
-        "You are Robin Jimmichan’s AI Portfolio Assistant. "
-        "You help explain his GitHub projects (Excel, Power BI, Python, SQL). "
-        "Give structured, professional, and beginner-friendly answers."
-        if st.session_state["mode"] == "Portfolio"
-        else "You are a Business Analytics AI expert helping with analytics, dashboards, and insights."
-    )
-
-    # --- Groq API Call ---
-    try:
-        response = client.chat.completions.create(
-            model="llama3-8b-8192",
-            messages=[
-                {"role": "system", "content": context_prompt},
-                {"role": "user", "content": user_input}
-            ],
-            temperature=0.7,
-        )
-        bot_reply = response.choices[0].message.content
-    except Exception as e:
-        bot_reply = f"⚠️ API error: {e}"
-
-    st.session_state["chat_history"].append({"user": user_input, "bot": bot_reply})
-
-    # --- Display Assistant Message ---
-    with st.chat_message("assistant"):
-        st.markdown(bot_reply)
-
-        # --- Text-to-Speech (optional play button) ---
-        try:
-            tts = gTTS(bot_reply)
-            tts_io = io.BytesIO()
-            tts.save(tts_io)
-            tts_io.seek(0)
-            b64 = base64.b64encode(tts_io.read()).decode()
-            audio_html = f'<audio controls autoplay><source src="data:audio/mp3;base64,{b64}" type="audio/mp3"></audio>'
-            st.markdown(audio_html, unsafe_allow_html=True)
-        except Exception:
-            pass
-
-# --- Chat History ---
-if st.session_state["chat_history"]:
-    st.markdown("### 💬 Chat History")
-    for chat in st.session_state["chat_history"]:
-        st.markdown(f"**You:** {chat['user']}")
-        st.markdown(f"**AI:** {chat['bot']}")
+    # Placeholder for actual Groq API logic (to be connected later)
+    response = f"Here’s some info about **{selected_project}** from the {selected_category} category!"
+    st.chat_message("assistant").markdown(response)
+    st.session_state.history.append({"role": "assistant", "content": response})
