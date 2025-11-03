@@ -18,6 +18,98 @@ from urllib.parse import urlparse
 # Import your verified context (must match what we finalized)
 from robi_context import context
 
+def build_system_prompt(chat_mode, selected_project=None):
+    """
+    Build the system prompt based on chat mode and selected project.
+    
+    Args:
+        chat_mode (str): Either "General Assistant" or "Business Analytics Assistant"
+        selected_project (str, optional): The URL of the selected project. Defaults to None.
+    
+    Returns:
+        str: The system prompt to use for the chat
+    """
+    # Base system prompt
+    base_prompt = f"""
+    You are {context.get('assistant_name', 'Portfoli-AI')}, a helpful AI assistant for {context.get('owner_name', 'the user')}'s portfolio.
+    {context.get('owner_name', 'The user')} is a {context.get('owner_role', 'professional')}.
+    """
+    
+    # Add mode-specific context
+    if chat_mode == "Business Analytics Assistant":
+        base_prompt += """
+        You are in Business Analytics Assistant mode. Focus on providing insights, analysis, and explanations
+        related to data analytics, visualization, and business intelligence.
+        """
+    else:  # General Assistant
+        base_prompt += """
+        You are in General Assistant mode. You can discuss a wide range of topics but maintain a professional tone
+        appropriate for a portfolio assistant.
+        """
+    
+    # Add project context if a project is selected
+    if selected_project:
+        # Find the project details
+        project_name = "the selected project"
+        project_category = None
+        for cat, projs in context.get("projects", {}).items():
+            for name, url in projs.items():
+                if url == selected_project:
+                    project_name = name
+                    project_category = cat
+                    break
+        
+        base_prompt += f"""
+        
+        The user is currently looking at their project: {project_name}
+        Category: {project_category or 'Not specified'}
+        Repository: {selected_project}
+        
+        When relevant, incorporate details about this project into your responses.
+        If the user asks questions about the project, be as helpful as possible based on the context.
+        """
+    
+    # Add general instructions
+    base_prompt += """
+    
+    Guidelines:
+    - Be concise but thorough in your responses
+    - Use markdown formatting where appropriate (e.g., **bold** for emphasis, `code` for technical terms)
+    - If you don't know something, say so rather than making up information
+    - Maintain a professional but friendly tone
+    - If the user asks about skills or technologies, reference the context when possible
+    """
+    
+    return base_prompt.strip()
+
+# -----------------------
+# Page config
+# -----------------------
+st.set_page_config(page_title="Portfoli-AI", page_icon="🤖", layout="wide")
+
+# [Rest of your existing code follows...]
+# The rest of your existing code goes here exactly as you have it
+# [Previous code continues...]
+"""
+Portfoli-AI — Streamlit app (Groq + neon frosted UI + GitHub README preview + gTTS)
+Requirements: see requirements.txt provided below
+Place robi_context.py (the context you finalized) in same folder.
+Add your Groq API key to Streamlit secrets: GROQ_API_KEY = "gsk_..."
+"""
+
+import streamlit as st
+from groq import Groq
+from gtts import gTTS
+from io import BytesIO
+import requests
+import json
+import os
+import textwrap
+from urllib.parse import urlparse
+
+# Import your verified context (must match what we finalized)
+from robi_context import context
+
 # -----------------------
 # Page config
 # -----------------------
@@ -432,3 +524,4 @@ if user_input:
 # -----------------------
 st.markdown("---")
 st.markdown("<div class='small-muted'>Built with ❤️ • Portfoli-AI • Contact: rjimmichan@gmail.com</div>", unsafe_allow_html=True)
+
