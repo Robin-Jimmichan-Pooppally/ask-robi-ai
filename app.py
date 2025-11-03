@@ -166,18 +166,6 @@ st.sidebar.markdown(f"- Email: <a href='mailto:{'rjimmichan@gmail.com'}'>{'rjimm
 st.sidebar.markdown(f"- LinkedIn: <a href='{ 'https://www.linkedin.com/in/robin-jimmichan-pooppally-676061291'}'>Profile</a>", unsafe_allow_html=True)
 st.sidebar.markdown(f"- GitHub: <a href='{ 'https://github.com/Robin-Jimmichan-Pooppally'}'>Robin-Jimmichan-Pooppally</a>", unsafe_allow_html=True)
 st.sidebar.markdown("---")
-# --- Clear Chat Button with Confirmation ---
-st.sidebar.markdown("### 🧹 Clear Chat")
-if st.sidebar.button("Clear Chat"):
-    confirm = st.sidebar.radio("Are you sure you want to clear chat?", ["No", "Yes"], index=0, key="clear_confirm")
-    if confirm == "Yes":
-        st.session_state.messages = []
-        st.session_state.chat_history = []
-        st.session_state.history = []
-        st.session_state.chat_input = ""
-        st.session_state.selected_project = None
-        st.sidebar.success("✅ Chat cleared successfully!")
-        st.rerun()
 
 # ... (continue with all your existing project, chat, Groq, and TTS sections unchanged)
 
@@ -256,26 +244,6 @@ if "chat_mode" not in st.session_state or st.session_state.get("chat_mode") != m
 # -----------------------
 # Groq client init (safe)
 # -----------------------
-# -----------------------
-# Helper: Build system prompt
-# -----------------------
-def build_system_prompt(mode, project_url=None):
-    """
-    Builds a contextual system prompt for Groq chat based on the selected mode and project.
-    """
-    base_prompt = f"You are Portfoli-AI, a helpful and concise assistant trained to explain {context['owner_name']}'s data analytics portfolio. "
-    base_prompt += "Be professional, insightful, and explain things clearly without unnecessary code unless requested.\n\n"
-
-    if mode == "Business Analytics Assistant":
-        base_prompt += "You specialize in business analytics, Excel dashboards, SQL insights, Power BI visualizations, and storytelling with data.\n"
-    else:
-        base_prompt += "You are a general portfolio assistant that helps with projects, GitHub repos, and summaries.\n"
-
-    if project_url:
-        base_prompt += f"\nThe user is currently viewing this project: {project_url}\n"
-    
-    return base_prompt.strip()
-
 def init_groq():
     api_key = st.secrets.get("GROQ_API_KEY") if "GROQ_API_KEY" in st.secrets else os.getenv("GROQ_API_KEY")
     if not api_key:
@@ -424,9 +392,7 @@ with col2:
 if send and user_input.strip():
     st.session_state.messages.append({"role": "user", "content": user_input})
     st.session_state.chat_history.append({"role": "user", "content": user_input})
-    st.session_state["chat_input"] = ""
-    st.experimental_rerun()
-
+    st.session_state.chat_input = ""  # Clear input after sending
 
 if erase:
     st.session_state.messages = []
