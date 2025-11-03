@@ -592,7 +592,7 @@ if user_input:
     with st.spinner("Thinking..."):
         try:
             completion = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model="llama-3.1-70b",
                 messages=messages,
                 temperature=0.25,
                 max_tokens=800,
