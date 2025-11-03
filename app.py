@@ -433,32 +433,34 @@ def speak_text(text):
             text = text[:500] + "... [text truncated for TTS]"
         
         # Generate speech using gTTS
-        tts = gTTS(text=text, lang='en', slow=False)
+        tts = gTTS(text=text, lang='en', slow=False, tld='com.au')
         
-        # Use BytesIO to handle the audio in memory
-        audio_buffer = BytesIO()
-        tts.write_to_fp(audio_buffer)
-        audio_buffer.seek(0)
+        # Save to a temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as fp:
+            temp_filename = fp.name
         
-        # Convert to base64 for better compatibility
-        audio_b64 = base64.b64encode(audio_buffer.read()).decode('utf-8')
-        audio_html = f'''
-        <audio autoplay="true" controls>
-            <source src="data:audio/mp3;base64,{audio_b64}" type="audio/mp3">
-            Your browser does not support the audio element.
-        </audio>
-        '''
+        # Save the audio to the temporary file
+        tts.save(temp_filename)
+        
+        # Play the audio file
+        audio_bytes = open(temp_filename, 'rb').read()
         
         # Display the audio player
-        st.components.v1.html(audio_html, height=50)
+        st.audio(audio_bytes, format='audio/mp3')
         
-        # Also provide a fallback audio player
-        audio_buffer.seek(0)
-        st.audio(audio_buffer, format='audio/mp3')
+        # Clean up the temporary file
+        try:
+            os.unlink(temp_filename)
+        except:
+            pass
+        
+        # Return the audio bytes in case we need them
+        return audio_bytes
         
     except Exception as e:
         st.warning(f"⚠️ TTS Error: {str(e)}")
         st.warning("Note: This feature requires an internet connection. Please check your connection and try again.")
+        return None
 
 def save_chat_local(history):
     try:
@@ -605,11 +607,34 @@ if submit_button and user_input:
     # TTS (plays if toggled in sidebar)
     if tts_toggle:
         try:
-            with st.spinner("Generating speech..."):
-                speak_text(bot_text)
+            with st.spinner("🔊 Generating speech..."):
+                audio_data = speak_text(bot_text)
+                if audio_data:
+                    # Add a small delay to ensure the audio element is rendered
+                    time.sleep(0.5)
+                    # Try to autoplay using JavaScript
+                    st.markdown("""
+                    <script>
+                    function playAudio() {
+                        var audioElements = document.getElementsByTagName('audio');
+                        if (audioElements.length > 0) {
+                            audioElements[0].play().catch(e => console.log('Autoplay prevented:', e));
+                        }
+                    }
+                    // Try to play immediately and also after a short delay
+                    playAudio();
+                    setTimeout(playAudio, 1000);
+                    </script>
+                    """, unsafe_allow_html=True)
         except Exception as e:
-            st.warning(f"TTS failed: {str(e)}")
-            st.warning("Please ensure you have an active internet connection and try again.")
+            st.warning(f"🔇 TTS failed: {str(e)}")
+            st.warning("""
+            If you're not hearing anything, please:
+            1. Check if your browser allows autoplay
+            2. Click the play button on the audio player
+            3. Ensure your volume is turned up
+            4. Try a different browser if the issue persists
+            """)
 
     # Rerun to update the UI
     st.experimental_rerun()
