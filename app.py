@@ -409,28 +409,43 @@ if "chat_mode" not in st.session_state or st.session_state.get("chat_mode") != m
     st.session_state.history = []  # reset conversation on mode change
 
 # -----------------------
-# Phase 2.3: Groq client init (safe)
+# Phase 2.3: Groq client init (safe, with REST fallback when SDK errors)
 # -----------------------
 def init_groq():
+    """
+    Initialize Groq SDK if possible. If SDK init fails with a TypeError
+    mentioning 'proxies' (or other incompatibility), fall back to using
+    the REST endpoint via requests. Returns a tuple (client, rest_config)
+      - client: an instance of Groq or None if REST fallback is used
+      - rest_config: dict with keys 'api_key' and 'base_url' when REST fallback is active, else None
+    """
     api_key = st.secrets.get("GROQ_API_KEY") if "GROQ_API_KEY" in st.secrets else os.getenv("GROQ_API_KEY")
     if not api_key:
         st.error("Missing Groq API key. Add GROQ_API_KEY to Streamlit secrets.")
         st.stop()
+
     try:
-        # ✅ Updated to new Groq client syntax
-        from groq import Groq
+        # Attempt normal SDK init (your preferred, original path)
         client = Groq(api_key=api_key)
-        return client
+        return client, None
     except TypeError as e:
-        # fallback if SDK version mismatch
-        st.error(f"Groq initialization error — please upgrade the SDK with: pip install -U groq\n\nDetails: {e}")
-        st.stop()
+        # Known SDK mismatch: older/newer versions may call Client.init(...) internally with unsupported args
+        if "proxies" in str(e):
+            # Use REST fallback (no proxies anywhere). Keep user informed but don't change behavior.
+            st.warning("Groq SDK initialization failed due to `proxies` argument. Using REST fallback (no SDK).")
+            rest_cfg = {"api_key": api_key, "base_url": "https://api.groq.com/openai/v1"}
+            return None, rest_cfg
+        else:
+            st.error(f"Groq initialization TypeError: {e}")
+            st.stop()
     except Exception as e:
-        st.error(f"Failed to initialize Groq client: {e}")
-        st.stop()
+        # Other unexpected errors — try REST fallback as last resort
+        st.warning(f"Groq SDK init failed, attempting REST fallback. Details: {e}")
+        rest_cfg = {"api_key": api_key, "base_url": "https://api.groq.com/openai/v1"}
+        return None, rest_cfg
 
-
-client = init_groq()
+# client may be an SDK client or None (if REST fallback)
+client, GROQ_REST = init_groq()
 
 # -----------------------
 # Phase 2.4: Helpers: fetch README from GitHub
@@ -579,8 +594,32 @@ def save_chat_local(history):
         pass
 
 # -----------------------
-# Phase 3.4: Process input -> Groq (unchanged core logic, safer error handling)
+# Phase 3.4: Process input -> Groq (unchanged core logic, safer error handling, REST fallback)
 # -----------------------
+def groq_rest_chat_call(rest_cfg, messages, model="llama-3.1-70b", temperature=0.25, max_tokens=800):
+    """
+    Call Groq REST chat completions endpoint directly (OpenAI-compatible).
+    rest_cfg: {'api_key':..., 'base_url':...}
+    messages: list of dicts with {'role','content'}
+    """
+    url = f"{rest_cfg['base_url']}/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {rest_cfg['api_key']}",
+        "Content-Type": "application/json"
+    }
+    body = {
+        "model": model,
+        "messages": messages,
+        "temperature": temperature,
+        "max_tokens": max_tokens
+    }
+    try:
+        r = requests.post(url, headers=headers, json=body, timeout=60)
+        r.raise_for_status()
+        return r.json()
+    except Exception as e:
+        return {"error": str(e), "status_code": getattr(e, "response", None)}
+
 if user_input:
     # Append user message to history
     st.session_state.history.append({"role": "user", "content": user_input})
@@ -598,26 +637,51 @@ if user_input:
 
     with st.spinner("Thinking..."):
         try:
-            completion = client.chat.completions.create(
-                model="llama-3.1-70b",
-                messages=messages,
-                temperature=0.25,
-                max_tokens=800,
-            )
-            # defensive access
+            # Primary path: SDK client if available
             bot_text = ""
-            if completion and hasattr(completion, "choices") and len(completion.choices) > 0:
-                # some SDKs return different structures; be defensive
-                choice = completion.choices[0]
-                if hasattr(choice, "message") and hasattr(choice.message, "content"):
-                    bot_text = choice.message.content.strip()
-                elif isinstance(choice, dict) and "message" in choice and "content" in choice["message"]:
-                    bot_text = choice["message"]["content"].strip()
+            if client is not None:
+                completion = client.chat.completions.create(
+                    model="llama-3.1-70b",
+                    messages=messages,
+                    temperature=0.25,
+                    max_tokens=800,
+                )
+                # defensive access for different SDK response shapes
+                if completion and hasattr(completion, "choices") and len(completion.choices) > 0:
+                    choice = completion.choices[0]
+                    if hasattr(choice, "message") and hasattr(choice.message, "content"):
+                        bot_text = choice.message.content.strip()
+                    elif isinstance(choice, dict) and "message" in choice and "content" in choice["message"]:
+                        bot_text = choice["message"]["content"].strip()
+                    elif isinstance(choice, dict) and "choices" in choice:
+                        # rare shape
+                        bot_text = str(choice)
+                    else:
+                        bot_text = str(choice)
                 else:
-                    # fallback to string repr
-                    bot_text = str(choice)
+                    bot_text = "⚠️ Received empty response from Groq SDK."
             else:
-                bot_text = "⚠️ Received empty response from Groq."
+                # REST fallback
+                resp = groq_rest_chat_call(GROQ_REST, messages, model="llama-3.1-70b", temperature=0.25, max_tokens=800)
+                if resp.get("error"):
+                    bot_text = f"⚠️ Groq REST error: {resp.get('error')}"
+                else:
+                    # parse standard OpenAI-compatible response
+                    try:
+                        choices = resp.get("choices", [])
+                        if choices and isinstance(choices, list) and len(choices) > 0:
+                            first = choices[0]
+                            # OpenAI-compatible: first["message"]["content"]
+                            if isinstance(first, dict) and "message" in first and "content" in first["message"]:
+                                bot_text = first["message"]["content"].strip()
+                            elif isinstance(first, dict) and "text" in first:
+                                bot_text = first["text"].strip()
+                            else:
+                                bot_text = str(first)
+                        else:
+                            bot_text = "⚠️ Received empty response from Groq REST endpoint."
+                    except Exception as e:
+                        bot_text = f"⚠️ Error parsing Groq REST response: {e}"
 
         except Exception as e:
             bot_text = f"⚠️ Groq API error: {e}"
