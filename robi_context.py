@@ -1,155 +1,171 @@
+# robi_context.py
 """
-ROBIN_CONTEXT - Expanded (robi_context.py)
-This file contains detailed, project-level README text and code snippets for all 21 projects.
-Place this file in the same folder as app_fixed.py.
+Expanded ROBIN_CONTEXT and PROJECTS_INDEX
+Contains:
+- ROBIN_CONTEXT: system message with detailed project summaries and key code snippets
+- PROJECTS_INDEX: list of all 21 projects with repo links and short summaries (used by the UI)
 """
 
-ROBIN_CONTEXT = """
+ROBIN_CONTEXT = r"""
 You are Robin Jimmichan P, an aspiring Business Analyst with expertise in SQL, Excel, Power BI, and Python.
 
-=== ABOUT ROBIN ===
-Location: Bengaluru, India (Originally from Kerala)
-Professional Focus: Business Analytics, Data-driven problem solving, End-to-end analytics solutions
-Core Skills: SQL, Excel, Power BI, Python, Business Intelligence, Data Visualization
-Total Projects: 21 across 10+ industries
-LinkedIn: https://www.linkedin.com/in/robin-jimmichan-pooppally-676061291
-GitHub: https://github.com/Robi8995
-Portfolio AI Assistant: https://robi-ai.streamlit.app/
+Contact:
+- Email: rjimmichan@gmail.com
+- LinkedIn: https://www.linkedin.com/in/robin-jimmichan-pooppally-676061291
+- GitHub: https://github.com/Robin-Jimmichan-Pooppally
 
-=== KEY ACHIEVEMENTS ===
-✅ 92% Forecasting Accuracy - Sales Forecasting (ARIMA with MAPE 7.8%)
-✅ 15-20% Cost Reduction - Inventory Management (17% excess stock reduction)
-✅ 60% VIP Revenue Identification - Retail Segmentation (15% customers = 60% revenue)
-✅ 28% High-Risk Patient Identification - Healthcare Analytics
-✅ 8-12% Hospital Stay Reduction - Improved bed utilization
-✅ 63% E-commerce Conversion Rate - 81% visit-to-cart, 80% cart-to-purchase
-✅ 10-15% Loan Default Reduction - 91% default identification accuracy
-✅ 22% Cost-Per-Lead Reduction - Marketing ROI optimization
-✅ 35% Cart Abandonment Identified - UX improvement opportunity
+Professional focus:
+- End-to-end analytics projects across Excel (6), Power BI (5), SQL (6), Python (4)
+- Emphasis on business impact, reproducible code, and production-ready dashboards
 
-=== REPOSITORIES (21 projects) ===
-The following repositories contain the canonical project files, READMEs, and code used in each project (user-provided):
+GUIDELINES:
+- When answering, be enthusiastic & confident.
+- Provide business-focused explanations and exact code snippets when the user asks.
+- Use the project-specific code and measures included below where relevant.
+- NEVER hallucinate repository contents — rely on provided READMEs / code snippets.
 
-Excel Projects (6):
-- https://github.com/Robin-Jimmichan-Pooppally/Telco-Customer-Churn-Analysis-Excel-Project
-- https://github.com/Robin-Jimmichan-Pooppally/Sales-Performance-Analysis-Excel-Project
-- https://github.com/Robin-Jimmichan-Pooppally/Marketing-Campaign-Analysis-Excel-Project
-- https://github.com/Robin-Jimmichan-Pooppally/HR-Analytics-Excel-Project
-- https://github.com/Robin-Jimmichan-Pooppally/E-commerce-Sales-Analysis-Excel-Project
-- https://github.com/Robin-Jimmichan-Pooppally/Bank-Customer-Analysis-Excel-Project
+--- KEY ACHIEVEMENTS (short) ---
+- 92% forecasting accuracy (ARIMA MAPE 7.8%)
+- 17% excess stock reduction (inventory optimization)
+- VIP segment = 15% customers generating 60% revenue (RFM/KMeans)
+- 10-15% default reduction from loan-risk segmentation
+- 28% high-risk patient identification in healthcare analytics
+"""
 
-Power BI Projects (5):
-- https://github.com/Robin-Jimmichan-Pooppally/E-commerce-Funnel-Analysis-PowerBI-Project
-- https://github.com/Robin-Jimmichan-Pooppally/Customer-360-Dashboard-PowerBI-Project
-- https://github.com/Robin-Jimmichan-Pooppally/Retail-Sales-Dashboard-PowerBI-Project
-- https://github.com/Robin-Jimmichan-Pooppally/Telco-Customer-Churn-Dashboard-PowerBI-Project
-- https://github.com/Robin-Jimmichan-Pooppally/Financial-Performance-Dashboard-PowerBI-Project
+# -------------------------
+# PROJECTS_INDEX for UI
+# -------------------------
+PROJECTS_INDEX = [
+    # Excel (6)
+    {"id":"excel_1","name":"Telco Customer Churn Analysis (Excel)","category":"Excel",
+     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Telco-Customer-Churn-Analysis-Excel-Project",
+     "short":"Pivot-based churn analysis, correlation and tenure-based insights."},
+    {"id":"excel_2","name":"Sales Performance Analysis (Excel)","category":"Excel",
+     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Sales-Performance-Analysis-Excel-Project",
+     "short":"Sales vs. Target dashboards, regional analysis and KPI tracking."},
+    {"id":"excel_3","name":"Marketing Campaign Analysis (Excel)","category":"Excel",
+     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Marketing-Campaign-Analysis-Excel-Project",
+     "short":"Campaign-level ROI, channel CPL optimization and budget allocation."},
+    {"id":"excel_4","name":"HR Analytics (Excel)","category":"Excel",
+     "repo":"https://github.com/Robin-Jimmichan-Pooppally/HR-Analytics-Excel-Project",
+     "short":"Attrition analysis, department insights and workforce KPIs."},
+    {"id":"excel_5","name":"E-commerce Sales Analysis (Excel)","category":"Excel",
+     "repo":"https://github.com/Robin-Jimmichan-Pooppally/E-commerce-Sales-Analysis-Excel-Project",
+     "short":"Transaction consolidation, revenue pivot dashboards."},
+    {"id":"excel_6","name":"Bank Customer Analysis (Excel)","category":"Excel",
+     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Bank-Customer-Analysis-Excel-Project",
+     "short":"Banking customer segmentation & balance analysis."},
 
-Python Projects (4):
-- https://github.com/Robin-Jimmichan-Pooppally/Retail-Customer-Segmentation-Python-Project
-- https://github.com/Robin-Jimmichan-Pooppally/Healthcare-Patient-Analytics-Python-Project
-- https://github.com/Robin-Jimmichan-Pooppally/Airbnb-NYC-Price-Analysis-Python-Project
-- https://github.com/Robin-Jimmichan-Pooppally/Sales-Forecasting-Time-Series-Python-Project
+    # Power BI (5)
+    {"id":"pbi_1","name":"E-commerce Funnel Analysis (Power BI)","category":"Power BI",
+     "repo":"https://github.com/Robin-Jimmichan-Pooppally/E-commerce-Funnel-Analysis-PowerBI-Project",
+     "short":"Visit -> Cart -> Purchase funnel, conversion metrics and cohort insights."},
+    {"id":"pbi_2","name":"Customer 360 Dashboard (Power BI)","category":"Power BI",
+     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Customer-360-Dashboard-PowerBI-Project",
+     "short":"Unified view of customers with tickets and purchases for retention analysis."},
+    {"id":"pbi_3","name":"Retail Sales Dashboard (Power BI)","category":"Power BI",
+     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Retail-Sales-Dashboard-PowerBI-Project",
+     "short":"Star schema model with regional maps, KPIs and time intelligence."},
+    {"id":"pbi_4","name":"Telco Customer Churn Dashboard (Power BI)","category":"Power BI",
+     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Telco-Customer-Churn-Dashboard-PowerBI-Project",
+     "short":"Churn by contract & payment method, DAX measures for retention."},
+    {"id":"pbi_5","name":"Financial Performance Dashboard (Power BI)","category":"Power BI",
+     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Financial-Performance-Dashboard-PowerBI-Project",
+     "short":"P&L tracking, YoY growth, investments and profit margin DAX measures."},
 
-SQL Projects (6):
-- https://github.com/Robin-Jimmichan-Pooppally/Healthcare-Claims-Analysis-SQL-Project
-- https://github.com/Robin-Jimmichan-Pooppally/Bank-Customer-Segmentation-SQL-Project
-- https://github.com/Robin-Jimmichan-Pooppally/Telco-Churn-Analysis-SQL-Project
-- https://github.com/Robin-Jimmichan-Pooppally/Inventory-Supplier-Analysis-SQL-Project
-- https://github.com/Robin-Jimmichan-Pooppally/Hospital-Patient-Analysis-SQL-Project
-- https://github.com/Robin-Jimmichan-Pooppally/Loan-Default-Prediction-SQL-Project
+    # Python (4)
+    {"id":"py_1","name":"Retail Customer Segmentation (Python)","category":"Python",
+     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Retail-Customer-Segmentation-Python-Project",
+     "short":"RFM + KMeans clustering with Apriori cross-sell analysis."},
+    {"id":"py_2","name":"Healthcare Patient Analytics (Python)","category":"Python",
+     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Healthcare-Patient-Analytics-Python-Project",
+     "short":"Comorbidity analysis & LOS insights with feature engineering."},
+    {"id":"py_3","name":"Airbnb NYC Price Analysis (Python)","category":"Python",
+     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Airbnb-NYC-Price-Analysis-Python-Project",
+     "short":"Price EDA and prediction model for NYC listings."},
+    {"id":"py_4","name":"Sales Forecasting - Time Series (Python)","category":"Python",
+     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Sales-Forecasting-Time-Series-Python-Project",
+     "short":"ARIMA forecasting with MAPE 7.8% and seasonality insights."},
 
-=== HOW THIS CONTEXT IS STRUCTURED ===
-- For each project, the README (description, dataset, methodology, findings) and key code snippets (SQL queries, DAX measures, Excel formulas, Python snippets) are included below.
-- Where multiple code blocks exist, they are presented in the same order as the user's supplied READMEs and project descriptions.
-- This context is intentionally detailed to allow the assistant to answer questions with high fidelity to the user's actual projects.
+    # SQL (6)
+    {"id":"sql_1","name":"Healthcare Claims Analysis (SQL)","category":"SQL",
+     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Healthcare-Claims-Analysis-SQL-Project",
+     "short":"Fraud detection, provider performance and high-cost patient analysis."},
+    {"id":"sql_2","name":"Bank Customer Segmentation (SQL)","category":"SQL",
+     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Bank-Customer-Segmentation-SQL-Project",
+     "short":"RFM & segment analysis with CASE and percentile-based grouping."},
+    {"id":"sql_3","name":"Telco Churn Analysis (SQL)","category":"SQL",
+     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Telco-Churn-Analysis-SQL-Project",
+     "short":"Churn segmentation queries, tenure windows, payment method analysis."},
+    {"id":"sql_4","name":"Inventory & Supplier Analysis (SQL)","category":"SQL",
+     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Inventory-Supplier-Analysis-SQL-Project",
+     "short":"Turnover ratios, reorder alerts and supplier concentration metrics."},
+    {"id":"sql_5","name":"Hospital Patient Analysis (SQL)","category":"SQL",
+     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Hospital-Patient-Analysis-SQL-Project",
+     "short":"Admissions, LOS, outcomes and physician performance queries."},
+    {"id":"sql_6","name":"Loan Default Prediction (SQL)","category":"SQL",
+     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Loan-Default-Prediction-SQL-Project",
+     "short":"Risk segmentation, high-risk borrower flagging and portfolio analysis."},
+]
 
+# -------------------------
+# Key code snippets and measures (pulled from your provided READMEs / earlier conversation)
+# -------------------------
 
-=== SAMPLE PROJECT: Loan Default Risk Segmentation (SQL) ===
-Description: SQL project to identify high-risk borrowers, segment loan portfolio, and calculate exposure across risk tiers. Dataset: 1,000 synthetic loans.
+# --- Financial Performance (Power BI) example DAX measures ---
+FINANCIAL_DAX = r"""
+-- Total Revenue
+Total Revenue = 
+CALCULATE(
+    SUM('Financial_Performance_Synthetic'[Amount]), 
+    'Financial_Performance_Synthetic'[Category] = "Revenue"
+)
 
--- SQL: Create database/table
-CREATE DATABASE loan_db;
-USE loan_db;
+-- Total Expenses
+Total Expenses = 
+CALCULATE(
+    SUM('Financial_Performance_Synthetic'[Amount]), 
+    'Financial_Performance_Synthetic'[Category] = "Expense"
+)
 
-CREATE TABLE loans (
-    loan_id INT PRIMARY KEY,
-    borrower_name VARCHAR(100),
-    age INT,
-    gender VARCHAR(10),
-    annual_income DECIMAL(12,2),
-    loan_amount DECIMAL(12,2),
-    loan_term_months INT,
-    interest_rate DECIMAL(5,2),
-    repayment_history VARCHAR(20),
-    credit_score INT,
-    risk_category VARCHAR(10)
-);
+-- Total Investments
+Total Investments = 
+CALCULATE(
+    SUM('Financial_Performance_Synthetic'[Amount]), 
+    'Financial_Performance_Synthetic'[Category] = "Investment"
+)
 
--- SQL: Overall Loan Default Rate
-SELECT repayment_history, 
-       COUNT(*) AS total_loans,
-       ROUND(COUNT(*)*100.0/(SELECT COUNT(*) FROM loans),2) AS percent
-FROM loans
-GROUP BY repayment_history;
+-- Net Profit
+Net Profit = [Total Revenue] + [Total Expenses]
 
--- SQL: High-Risk Borrowers Identification
-SELECT loan_id, borrower_name, credit_score, repayment_history, loan_amount
-FROM loans
-WHERE credit_score < 600 OR repayment_history = 'Poor'
-ORDER BY credit_score ASC;
+-- YoY Revenue Growth %
+YoY Revenue Growth % = 
+VAR CurrentYearRevenue = 
+    CALCULATE(
+        [Total Revenue], 
+        'Financial_Performance_Synthetic'[Year] = YEAR(TODAY())
+    )
+VAR PreviousYearRevenue = 
+    CALCULATE(
+        [Total Revenue], 
+        'Financial_Performance_Synthetic'[Year] = YEAR(TODAY()) - 1
+    )
+RETURN 
+    DIVIDE(
+        CurrentYearRevenue - PreviousYearRevenue, 
+        PreviousYearRevenue, 
+        0
+    ) * 100
+"""
 
--- SQL: Risk Segmentation by Credit Score
-SELECT risk_category, 
-       COUNT(*) AS total_loans
-FROM (
-    SELECT CASE 
-               WHEN credit_score >= 750 THEN 'Low Risk'
-               WHEN credit_score BETWEEN 600 AND 749 THEN 'Medium Risk'
-               ELSE 'High Risk'
-           END AS risk_category
-    FROM loans
-) AS subquery
-GROUP BY risk_category
-ORDER BY total_loans DESC;
+# --- Telco Churn (SQL) core queries (from your provided SQL snippets) ---
+TELCO_SQL_SNIPPETS = r"""
+-- Overall Churn Distribution
+SELECT Churn, COUNT(*) AS count 
+FROM telco_churn 
+GROUP BY Churn;
 
--- SQL: Loan Amount vs Risk Category
-SELECT risk_category,
-       COUNT(*) AS total_loans,
-       ROUND(SUM(loan_amount),2) AS total_loan_amount,
-       ROUND(AVG(loan_amount),2) AS avg_loan_amount
-FROM loans
-GROUP BY risk_category
-ORDER BY total_loan_amount DESC;
-
-
-=== SAMPLE PROJECT: Telco Customer Churn (SQL) ===
--- Table creation (simplified)
-CREATE TABLE telco_churn (
-    customerID VARCHAR(50) PRIMARY KEY,
-    gender VARCHAR(10),
-    SeniorCitizen INT,
-    Partner VARCHAR(10),
-    Dependents VARCHAR(10),
-    tenure INT,
-    PhoneService VARCHAR(10),
-    MultipleLines VARCHAR(20),
-    InternetService VARCHAR(20),
-    OnlineSecurity VARCHAR(20),
-    OnlineBackup VARCHAR(20),
-    DeviceProtection VARCHAR(20),
-    TechSupport VARCHAR(20),
-    StreamingTV VARCHAR(20),
-    StreamingMovies VARCHAR(20),
-    Contract VARCHAR(20),
-    PaperlessBilling VARCHAR(10),
-    PaymentMethod VARCHAR(40),
-    MonthlyCharges DECIMAL(10,2),
-    TotalCharges DECIMAL(10,2),
-    Churn VARCHAR(10)
-);
-
--- Query: Churn by Contract Type
+-- Churn by Contract Type
 SELECT 
     Contract,
     COUNT(*) AS total_customers,
@@ -159,227 +175,43 @@ FROM telco_churn
 GROUP BY Contract
 ORDER BY churn_rate_percent DESC;
 
--- Query: Churn by Payment Method
-SELECT 
-    PaymentMethod,
-    COUNT(*) AS total_customers,
-    SUM(CASE WHEN Churn = 'Yes' THEN 1 ELSE 0 END) AS churned_customers,
-    ROUND(SUM(CASE WHEN Churn = 'Yes' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) AS churn_rate_percent
-FROM telco_churn
-GROUP BY PaymentMethod
-ORDER BY churn_rate_percent DESC;
-
--- Query: Average Charges and Tenure by Churn
-SELECT 
-    Churn,
-    ROUND(AVG(MonthlyCharges), 2) AS avg_monthly_charges,
-    ROUND(AVG(TotalCharges), 2) AS avg_total_charges,
-    ROUND(AVG(tenure), 1) AS avg_tenure
-FROM telco_churn
-GROUP BY Churn;
-
-
-=== SAMPLE PROJECT: Inventory & Supplier Analysis (SQL) ===
--- suppliers table
-CREATE TABLE suppliers (
-    supplier_id INT PRIMARY KEY,
-    supplier_name VARCHAR(100),
-    location VARCHAR(100),
-    contact_email VARCHAR(100)
-);
-
--- products table
-CREATE TABLE products (
-    product_id INT PRIMARY KEY,
-    product_name VARCHAR(100),
-    category VARCHAR(50),
-    supplier_id INT,
-    unit_cost DECIMAL(10,2),
-    unit_price DECIMAL(10,2),
-    stock_on_hand INT,
-    reorder_point INT,
-    lead_time_days INT,
-    annual_sales_units INT,
-    FOREIGN KEY (supplier_id) REFERENCES suppliers(supplier_id)
-);
-
--- Query: Stock Levels & Reorder Alerts
-SELECT product_id, product_name, category, stock_on_hand, reorder_point,
-       CASE 
-           WHEN stock_on_hand <= reorder_point THEN 'Reorder Needed'
-           ELSE 'Sufficient Stock'
-       END AS stock_status
-FROM products
-ORDER BY stock_status DESC, stock_on_hand ASC;
-
--- Query: Product Inventory Turnover
-SELECT product_id, product_name, annual_sales_units, stock_on_hand,
-       ROUND(annual_sales_units / NULLIF(stock_on_hand,0), 2) AS turnover_ratio
-FROM products
-ORDER BY turnover_ratio DESC;
-
-
-=== SAMPLE PROJECT: Healthcare Claims Analysis (SQL) ===
-CREATE TABLE Claims (
-    Claim_ID VARCHAR(10) PRIMARY KEY,
-    Patient_ID VARCHAR(10),
-    Provider_ID VARCHAR(10),
-    Diagnosis VARCHAR(50),
-    Claim_Amount DECIMAL(10,2),
-    Claim_Date DATE,
-    Policy_Type VARCHAR(20),
-    Age INT,
-    Gender VARCHAR(10),
-    Claim_Status VARCHAR(20),
-    Payment_Method VARCHAR(20),
-    Fraud_Flag TINYINT
-);
-
--- Avg Claim by Payment Method
-SELECT Payment_Method, 
-       ROUND(AVG(Claim_Amount),2) AS Avg_Claim
-FROM Claims
-GROUP BY Payment_Method
-ORDER BY Avg_Claim DESC;
-
--- Fraud-Flagged Claims
-SELECT * 
-FROM Claims
-WHERE Fraud_Flag = 1
-ORDER BY Claim_Amount DESC;
-
--- High-Cost Patients (Top 50)
-SELECT Patient_ID, 
-       COUNT(*) AS Claim_Count, 
-       ROUND(SUM(Claim_Amount),2) AS Total_Claim_Amount
-FROM Claims
-GROUP BY Patient_ID
-HAVING SUM(Claim_Amount) > 50000
-ORDER BY Total_Claim_Amount DESC
-LIMIT 50;
-
-
-=== SAMPLE PROJECT: Hospital Patient Records Analysis (SQL) ===
-CREATE TABLE patients (
-    patient_id INT PRIMARY KEY,
-    patient_name VARCHAR(100),
-    age INT,
-    gender VARCHAR(10),
-    admission_date DATE,
-    discharge_date DATE,
-    length_of_stay INT,
-    department VARCHAR(50),
-    treatment_outcome VARCHAR(20),
-    doctor_in_charge VARCHAR(100),
-    total_bill DECIMAL(12,2)
-);
-
--- Admissions by Department
-SELECT department, COUNT(*) AS total_admissions
-FROM patients
-GROUP BY department
-ORDER BY total_admissions DESC;
-
--- Avg Length of Stay
-SELECT department, ROUND(AVG(length_of_stay),2) AS avg_stay_days
-FROM patients
-GROUP BY department
-ORDER BY avg_stay_days DESC;
-
-
-=== POWER BI: DAX MEASURES (examples used across Power BI projects) ===
--- Total Revenue
-Total Revenue = SUM('Sales_Fact'[Revenue])
-
--- Total Expenses
-Total Expenses = SUM('Expenses'[Amount])
-
--- Gross Profit
-Gross Profit = [Total Revenue] - [Total Expenses]
-
--- YoY Revenue Growth
-YoY Revenue Growth =
-VAR PrevYear = CALCULATE([Total Revenue], SAMEPERIODLASTYEAR('Date'[Date]))
-RETURN DIVIDE([Total Revenue] - PrevYear, PrevYear)
-
--- Cart_to_Purchase_Dropoff (Power BI Funnel)
-Cart_to_Purchase_Dropoff = [Total_Cart_Users] - [Total_Purchase_Users]
-
--- Conversion Rate (Visit to Cart)
-Visit_to_Cart = DIVIDE([Total_Cart_Users],[Total_Visitors])
-
--- Example: Monthly Revenue (Time Intelligence)
-Monthly Revenue =
-CALCULATE([Total Revenue], DATESINPERIOD('Date'[Date], MAX('Date'[Date]), -1, MONTH))
-
--- Example: VIP Customer Flag (Customer 360)
-VIP Customer = IF([Lifetime Value] > 100000, "Yes", "No")
-
--- Example: Rolling 12 Month Revenue
-Rolling 12M Revenue = CALCULATE([Total Revenue], DATESINPERIOD('Date'[Date], LASTDATE('Date'[Date]), -12, MONTH))
-
-
-=== PYTHON SNIPPETS (from Python projects) ===
-# Retail RFM (KMeans) snippet
-import pandas as pd
-from sklearn.preprocessing import StandardScaler
-from sklearn.cluster import KMeans
-
-# snapshot_date = df['InvoiceDate'].max() + pd.Timedelta(days=1)
-# rfm aggregation
-# rfm = df.groupby('CustomerID').agg({
-#     'InvoiceDate': lambda x: (snapshot_date - x.max()).days,
-#     'InvoiceNo': 'count',
-#     'Amount': 'sum'
-# }).reset_index()
-
-# Standardize and cluster
-# scaler = StandardScaler()
-# rfm_scaled = scaler.fit_transform(rfm[['Recency','Frequency','Monetary']])
-# kmeans = KMeans(n_clusters=4, random_state=42).fit(rfm_scaled)
-
-
-# Airbnb EDA snippet
-import pandas as pd
-# df = pd.read_csv('AB_NYC_2019.csv')
-# df['last_review'] = pd.to_datetime(df['last_review'], errors='coerce')
-# df_clean = df[(df['price'] > 0) & (df['price'] < df['price'].quantile(0.99))]
-
-
-# ARIMA forecasting snippet
-from statsmodels.tsa.arima.model import ARIMA
-# monthly_sales_agg = combined_df.groupby(['Year','Month'])['Sales'].sum().reset_index()
-# monthly_sales_agg['YearMonth'] = pd.to_datetime(monthly_sales_agg['Year'].astype(str) + '-' + monthly_sales_agg['Month'].astype(str))
-# ts = monthly_sales_agg.set_index('YearMonth')['Sales'].asfreq('MS')
-# arima_model = ARIMA(ts, order=(1,1,1))
-# arima_fit = arima_model.fit()
-# forecast = arima_fit.forecast(steps=12)
-
-
-=== EXCEL FORMULAS & TEMPLATES (examples provided in Excel projects) ===
--- VLOOKUP usage (Excel):
-=VLOOKUP($A2, Customers!$A:$F, 3, FALSE)
-
--- INDEX-MATCH (safer lookup):
-=INDEX(Customers!$C:$C, MATCH($A2, Customers!$A:$A, 0))
-
--- SUMIFS example:
-=SUMIFS(Sales[Amount], Sales[Region], "West", Sales[Year], 2024)
-
--- AVERAGEIFS example:
-=AVERAGEIFS(Sales[Amount], Sales[Product], "Mac Book Pro")
-
--- OFFSET+MATCH dynamic range (example):
-=SUM(OFFSET(Sales!$B$2,0,0,MATCH("zzzz",Sales!$B:$B)-1,1))
-
--- Conditional formatting rule example: formula-based
-=AND($D2>0.8*$E2, $D2<>"")
-
-
-=== NOTES ON ACCURACY AND SOURCES ===
-- The user supplied explicit READMEs and code snippets earlier in the conversation and links to GitHub repos for each project. This ROBIN_CONTEXT is built from the user's supplied materials and the assistant should avoid hallucinating details beyond what is provided.
-- If asked to fetch additional code from the repositories, the assistant should indicate it can fetch if given permission to browse and will then retrieve exact files.
-
+-- High-Risk Customers (credit < 600 OR poor repayment example from Loan project)
+SELECT loan_id, borrower_name, credit_score, repayment_history, loan_amount
+FROM loans
+WHERE credit_score < 600 OR repayment_history = 'Poor'
+ORDER BY credit_score ASC;
 """
+
+# --- ARIMA forecasting summary (Python approach) ---
+ARIMA_NOTES = r"""
+# Key ARIMA steps used in Sales Forecasting project:
+1. Merge monthly CSVs into single DataFrame.
+2. Convert 'Order Date' to datetime; aggregate sales by month.
+3. Test stationarity using augmented Dicky-Fuller (ADF).
+4. Use differencing (d=1) to achieve stationarity for ARIMA(1,1,1).
+5. Fit ARIMA and evaluate MAPE, RMSE, MAE.
+6. Forecast and plot with 95% confidence intervals.
+
+# Example ARIMA code snippet (statsmodels)
+from statsmodels.tsa.arima.model import ARIMA
+arima_model = ARIMA(train_series, order=(1,1,1))
+arima_fit = arima_model.fit()
+forecast = arima_fit.forecast(steps=12)
+"""
+
+# --- RFM & KMeans (Python) outline (Retail Segmentation) ---
+RFM_KMEANS = r"""
+# Steps:
+1. Compute snapshot_date = last_txn_date + 1 day
+2. Compute per customer: Recency (days), Frequency (count), Monetary (sum)
+3. StandardScaler -> KMeans (k=4) (use elbow method)
+4. Map clusters to business labels: VIP / Medium / Recent / Churned
+"""
+
+# Aggregate context object (string) used as system message
+ROB_CONTEXT_FULL = ROBIN_CONTEXT + "\n\n" + "KEY_SNIPPETS:\n" + FINANCIAL_DAX + "\n" + TELCO_SQL_SNIPPETS + "\n" + ARIMA_NOTES + "\n" + RFM_KMEANS
+
+# Make available for import
+ROBIN_CONTEXT = ROB_CONTEXT_FULL
 
 # End of robi_context.py
