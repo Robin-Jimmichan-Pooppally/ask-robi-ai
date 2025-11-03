@@ -243,14 +243,25 @@ for m in st.session_state.messages[1:]:
 # ---------------- Projects grid ----------------
 st.markdown("## 📂 Projects — browse & ask")
 cols = st.columns(4)
+
 for i, proj in enumerate(PROJECTS_INDEX[:12]):  # show first 12 for speed; rest available via sidebar
     col = cols[i % 4]
     with col:
         st.markdown("<div class='card'>", unsafe_allow_html=True)
-        st.markdown(f"<div><span class='badge'>{proj['category']}</span> <span class='accent'>{proj['name']}</span></div>", unsafe_allow_html=True)
+
+        proj_name = proj.get("name", "Untitled Project")
+        proj_category = proj.get("category", "General")
+
+        st.markdown(
+            f"<div><span class='badge'>{proj_category}</span> <span class='accent'>{proj_name}</span></div>",
+            unsafe_allow_html=True
+        )
+
         st.markdown(f"<div class='small-muted' style='margin-top:8px'>{proj.get('short','—')}</div>", unsafe_allow_html=True)
         st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-        c1, c2, c3 = st.columns([1,1,1])
+
+        c1, c2, c3 = st.columns([1, 1, 1])
+
         with c1:
             if st.button("🔗 Open Repo", key=f"open_{proj['id']}"):
                 st.experimental_set_query_params(repo=proj['repo'])
