@@ -166,6 +166,18 @@ st.sidebar.markdown(f"- Email: <a href='mailto:{'rjimmichan@gmail.com'}'>{'rjimm
 st.sidebar.markdown(f"- LinkedIn: <a href='{ 'https://www.linkedin.com/in/robin-jimmichan-pooppally-676061291'}'>Profile</a>", unsafe_allow_html=True)
 st.sidebar.markdown(f"- GitHub: <a href='{ 'https://github.com/Robin-Jimmichan-Pooppally'}'>Robin-Jimmichan-Pooppally</a>", unsafe_allow_html=True)
 st.sidebar.markdown("---")
+# --- Clear Chat Button with Confirmation ---
+st.sidebar.markdown("### 🧹 Clear Chat")
+if st.sidebar.button("Clear Chat"):
+    confirm = st.sidebar.radio("Are you sure you want to clear chat?", ["No", "Yes"], index=0, key="clear_confirm")
+    if confirm == "Yes":
+        st.session_state.messages = []
+        st.session_state.chat_history = []
+        st.session_state.history = []
+        st.session_state.chat_input = ""
+        st.session_state.selected_project = None
+        st.sidebar.success("✅ Chat cleared successfully!")
+        st.rerun()
 
 # ... (continue with all your existing project, chat, Groq, and TTS sections unchanged)
 
