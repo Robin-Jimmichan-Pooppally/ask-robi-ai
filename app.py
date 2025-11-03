@@ -1,164 +1,118 @@
-# ===============================================
-# 🚀 Portfoli-AI – Streamlit + Groq Chatbot App
-# Author: Robin Jimmichan Pooppally
-# Version: v1.0 (Production)
-# ===============================================
-
 import streamlit as st
 from groq import Groq
 from gtts import gTTS
-from io import BytesIO
-import base64
-import os
-import json
+import os, base64
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
 from dotenv import load_dotenv
-from PIL import Image
-from robi_context import context
+from io import BytesIO
 
-# -----------------------------------------------
-# 🌍 Load Environment Variables (optional local)
-# -----------------------------------------------
+# ---------------------- ENV + API ----------------------
 load_dotenv()
+client = Groq(api_key=st.secrets["GROQ_API_KEY"])
 
-# -----------------------------------------------
-# 🔐 API Setup (Groq)
-# -----------------------------------------------
-try:
-    GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
-except Exception:
-    GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+# ---------------------- CONFIG ----------------------
+st.set_page_config(page_title="Portfoli-AI", page_icon="💡", layout="wide")
 
-if not GROQ_API_KEY:
-    st.error("❌ Missing GROQ_API_KEY. Please add it to Streamlit secrets or .env file.")
-    st.stop()
-
-client = Groq(api_key=GROQ_API_KEY, base_url="https://api.groq.com/openai/v1")
-
-# -----------------------------------------------
-# 🎨 Streamlit Page Config
-# -----------------------------------------------
-st.set_page_config(
-    page_title="Portfoli-AI | Robin Jimmichan Pooppally",
-    page_icon="🤖",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
-
-# -----------------------------------------------
-# 💎 Custom CSS – Neon Frosted Glass UI
-# -----------------------------------------------
+# ---------------------- STYLING ----------------------
 st.markdown("""
 <style>
 body {
-    background: linear-gradient(145deg, #000000, #05081a);
-    background-attachment: fixed;
-    color: #e0e8ff;
+    background: radial-gradient(circle at top left, #000010, #020b1a 70%);
+    color: white;
 }
-.chat-box {
-    background: rgba(10, 15, 25, 0.6);
+div[data-testid="stAppViewContainer"] {
+    background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(15px);
+    border-radius: 20px;
+    padding: 2rem;
+}
+.chat-message {
     border: 1px solid rgba(0, 255, 255, 0.25);
-    box-shadow: 0 0 20px rgba(0, 200, 255, 0.2);
-    border-radius: 18px;
-    padding: 20px;
-    margin-top: 10px;
+    border-radius: 10px;
+    padding: 0.9rem;
+    margin-bottom: 0.8rem;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
 }
-.chat-bubble-user {
-    background: rgba(0, 255, 255, 0.15);
-    border: 1px solid rgba(0, 255, 255, 0.3);
-    border-radius: 12px;
-    padding: 10px 14px;
-    color: #e0ffff;
-    margin: 5px 0;
+.stButton>button {
+    background-color: #001f33;
+    border: 1px solid #00ffff;
+    color: #00ffff;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: 0.3s;
 }
-.chat-bubble-bot {
-    background: rgba(0, 40, 60, 0.6);
-    border: 1px solid rgba(0, 200, 255, 0.2);
-    border-radius: 12px;
-    padding: 10px 14px;
-    color: #d8efff;
-    margin: 5px 0;
-}
-h1, h2, h3 {
-    color: #00e0ff !important;
-}
-button[kind="primary"] {
-    background: linear-gradient(90deg, #00d0ff, #0066ff);
-    border: none;
-    color: white !important;
+.stButton>button:hover {
+    background-color: #00ffff;
+    color: #000;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# -----------------------------------------------
-# 🎤 Text-to-Speech Function
-# -----------------------------------------------
-def speak_text(text):
-    try:
-        tts = gTTS(text)
-        buf = BytesIO()
-        tts.write_to_fp(buf)
-        audio_bytes = buf.getvalue()
-        st.audio(audio_bytes, format="audio/mp3")
-    except Exception as e:
-        st.warning("TTS unavailable at the moment.")
+# ---------------------- SIDEBAR ----------------------
+st.sidebar.markdown("### 👋 Welcome to Portfoli-AI")
+st.sidebar.markdown("Your AI-powered portfolio companion")
 
-# -----------------------------------------------
-# 🧠 Chatbot Function
-# -----------------------------------------------
-def ask_portfoliai(prompt):
-    """Send prompt to Groq LLM"""
-    try:
-        full_prompt = f"""
-        You are {context['assistant_name']}, a professional portfolio assistant for {context['owner_name']}.
-        Reference the provided context only:
-        {json.dumps(context, indent=2)}
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 📬 Connect with me:")
+st.sidebar.write("**📧 Email:** [rjimmichan@gmail.com](mailto:rjimmichan@gmail.com)")
+st.sidebar.write("**💻 GitHub:** [Robin-Jimmichan-Pooppally](https://github.com/Robin-Jimmichan-Pooppally)")
+st.sidebar.write("**🔗 LinkedIn:** [Robin Jimmichan Pooppally](https://www.linkedin.com/in/robin-jimmichan-pooppally-676061291)")
 
-        User question: {prompt}
-        """
-        response = client.chat.completions.create(
-            model="mixtral-8x7b-32768",
-            messages=[{"role": "user", "content": full_prompt}],
-            temperature=0.6,
-            max_tokens=600
-        )
-        return response.choices[0].message.content.strip()
-    except Exception as e:
-        st.error(f"⚠️ API error: {e}")
-        return None
+st.sidebar.markdown("---")
+repo_list = [
+    "Telco-Customer-Churn-Analysis",
+    "Financial-Performance-Dashboard-PowerBI-Project",
+    "Airbnb-NYC-Price-Analysis",
+    "HR-Analytics-Employee-Attrition",
+    "Sales-Performance-Excel-Dashboard"
+]
+selected_repo = st.sidebar.selectbox("📁 Choose a Project Repo", repo_list)
+st.sidebar.markdown(f"[🔍 View on GitHub](https://github.com/Robin-Jimmichan-Pooppally/{selected_repo})")
 
-# -----------------------------------------------
-# 🚀 Main Streamlit UI
-# -----------------------------------------------
-st.title("🤖 Portfoli-AI – Robin Jimmichan’s Portfolio Assistant")
+# ---------------------- MAIN ----------------------
+st.markdown("<h1 style='text-align:center; color:#00ffff;'>💬 Portfoli-AI</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center;'>Your neon-lit AI portfolio assistant</p>", unsafe_allow_html=True)
 
-# Show greeting once
-if "greeted" not in st.session_state:
-    st.session_state.greeted = True
-    st.markdown(f'<div class="chat-box"><div class="chat-bubble-bot">{context["greeting_message"]}</div></div>', unsafe_allow_html=True)
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
 
-# User query input
-user_query = st.chat_input("Ask about any of Robin’s projects...")
+user_input = st.text_input("💡 Ask me about my projects, skills, or insights:", key="input_text")
+col1, col2 = st.columns([1, 0.2])
+with col1:
+    send = st.button("🚀 Send")
+with col2:
+    tts_enabled = st.toggle("🔊 TTS", value=False)
 
-if user_query:
-    st.markdown(f'<div class="chat-box"><div class="chat-bubble-user">👤 {user_query}</div></div>', unsafe_allow_html=True)
-    bot_reply = ask_portfoliai(user_query)
-    if bot_reply:
-        st.markdown(f'<div class="chat-box"><div class="chat-bubble-bot">🤖 {bot_reply}</div></div>', unsafe_allow_html=True)
-        with st.expander("🔊 Listen to this response"):
-            speak_text(bot_reply)
+# ---------------------- CHAT ----------------------
+if send and user_input:
+    with st.spinner("Thinking..."):
+        try:
+            completion = client.chat.completions.create(
+                model="mixtral-8x7b-32768",
+                messages=[
+                    {"role": "system", "content": "You are Portfoli-AI, Robin Jimmichan's intelligent portfolio assistant."},
+                    {"role": "user", "content": user_input}
+                ]
+            )
+            answer = completion.choices[0].message.content
+            st.session_state.chat_history.append(("user", user_input))
+            st.session_state.chat_history.append(("bot", answer))
 
-# Sidebar — Quick Filters
-st.sidebar.header("🎯 Filter by Project Type")
-for category in context["projects"].keys():
-    if st.sidebar.button(category):
-        st.markdown(f"### 📂 {category} Projects")
-        for proj_name, link in context["projects"][category].items():
-            st.markdown(f"🔹 **[{proj_name}]({link})**")
+            if tts_enabled:
+                tts = gTTS(answer)
+                tts.save("response.mp3")
+                audio_bytes = open("response.mp3", "rb").read()
+                b64 = base64.b64encode(audio_bytes).decode()
+                st.markdown(
+                    f'<audio autoplay="true" src="data:audio/mp3;base64,{b64}"></audio>',
+                    unsafe_allow_html=True
+                )
+        except Exception as e:
+            st.error(f"⚠️ Groq API error: {e}")
 
-# Footer
-st.markdown("<br><center>💡 Built with ❤️ using Streamlit + Groq</center>", unsafe_allow_html=True)
+# ---------------------- DISPLAY ----------------------
+for role, msg in st.session_state.chat_history:
+    if role == "user":
+        st.markdown(f"<div class='chat-message'><b>🧑 You:</b> {msg}</div>", unsafe_allow_html=True)
+    else:
+        st.markdown(f"<div class='chat-message'><b>🤖 Portfoli-AI:</b> {msg}</div>", unsafe_allow_html=True)
