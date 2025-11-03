@@ -256,6 +256,26 @@ if "chat_mode" not in st.session_state or st.session_state.get("chat_mode") != m
 # -----------------------
 # Groq client init (safe)
 # -----------------------
+# -----------------------
+# Helper: Build system prompt
+# -----------------------
+def build_system_prompt(mode, project_url=None):
+    """
+    Builds a contextual system prompt for Groq chat based on the selected mode and project.
+    """
+    base_prompt = f"You are Portfoli-AI, a helpful and concise assistant trained to explain {context['owner_name']}'s data analytics portfolio. "
+    base_prompt += "Be professional, insightful, and explain things clearly without unnecessary code unless requested.\n\n"
+
+    if mode == "Business Analytics Assistant":
+        base_prompt += "You specialize in business analytics, Excel dashboards, SQL insights, Power BI visualizations, and storytelling with data.\n"
+    else:
+        base_prompt += "You are a general portfolio assistant that helps with projects, GitHub repos, and summaries.\n"
+
+    if project_url:
+        base_prompt += f"\nThe user is currently viewing this project: {project_url}\n"
+    
+    return base_prompt.strip()
+
 def init_groq():
     api_key = st.secrets.get("GROQ_API_KEY") if "GROQ_API_KEY" in st.secrets else os.getenv("GROQ_API_KEY")
     if not api_key:
