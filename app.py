@@ -428,39 +428,36 @@ def fetch_readme_lines(repo_url, max_lines=20):
 
 def speak_text(text):
     try:
+        # Debug: Show we're entering the function
+        st.session_state.debug_tts = "TTS function called"
+        
         # Limit text length to prevent very long audio generation
-        if len(text) > 500:
-            text = text[:500] + "... [text truncated for TTS]"
+        if len(text) > 100:
+            text = text[:100] + "... [truncated]"
+        
+        # Create a placeholder for the audio
+        audio_placeholder = st.empty()
         
         # Generate speech using gTTS
-        tts = gTTS(text=text, lang='en', slow=False, tld='com.au')
+        tts = gTTS(text=text, lang='en', slow=False)
         
-        # Save to a temporary file
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as fp:
-            temp_filename = fp.name
-        
-        # Save the audio to the temporary file
-        tts.save(temp_filename)
-        
-        # Play the audio file
-        audio_bytes = open(temp_filename, 'rb').read()
+        # Use BytesIO to handle the audio in memory
+        audio_buffer = BytesIO()
+        tts.write_to_fp(audio_buffer)
+        audio_buffer.seek(0)
         
         # Display the audio player
-        st.audio(audio_bytes, format='audio/mp3')
+        audio_placeholder.audio(audio_buffer, format='audio/mp3')
         
-        # Clean up the temporary file
-        try:
-            os.unlink(temp_filename)
-        except:
-            pass
+        # Debug: Show success
+        st.session_state.debug_tts = "Audio generated and displayed"
         
-        # Return the audio bytes in case we need them
-        return audio_bytes
+        return True
         
     except Exception as e:
+        st.session_state.debug_tts = f"TTS Error: {str(e)}"
         st.warning(f"⚠️ TTS Error: {str(e)}")
-        st.warning("Note: This feature requires an internet connection. Please check your connection and try again.")
-        return None
+        return False
 
 def save_chat_local(history):
     try:
@@ -606,35 +603,25 @@ if submit_button and user_input:
 
     # TTS (plays if toggled in sidebar)
     if tts_toggle:
-        try:
-            with st.spinner("🔊 Generating speech..."):
-                audio_data = speak_text(bot_text)
-                if audio_data:
-                    # Add a small delay to ensure the audio element is rendered
-                    time.sleep(0.5)
-                    # Try to autoplay using JavaScript
-                    st.markdown("""
-                    <script>
-                    function playAudio() {
-                        var audioElements = document.getElementsByTagName('audio');
-                        if (audioElements.length > 0) {
-                            audioElements[0].play().catch(e => console.log('Autoplay prevented:', e));
-                        }
-                    }
-                    // Try to play immediately and also after a short delay
-                    playAudio();
-                    setTimeout(playAudio, 1000);
-                    </script>
-                    """, unsafe_allow_html=True)
-        except Exception as e:
-            st.warning(f"🔇 TTS failed: {str(e)}")
-            st.warning("""
-            If you're not hearing anything, please:
-            1. Check if your browser allows autoplay
-            2. Click the play button on the audio player
-            3. Ensure your volume is turned up
-            4. Try a different browser if the issue persists
-            """)
+        with st.spinner("🔊 Generating speech..."):
+            success = speak_text(bot_text)
+            if success:
+                st.markdown("""
+                <div style='margin: 10px 0; padding: 10px; background: rgba(0, 229, 255, 0.1); border-radius: 8px;'>
+                    <p style='margin: 0; color: #00E5FF;'>🔊 Audio is ready! Click the play button above to listen.</p>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.warning("""
+                Couldn't generate speech. Please try these steps:
+                1. Check your internet connection
+                2. Refresh the page and try again
+                3. If the problem persists, try a different browser
+                """)
+                
+        # Debug info (only shown if there's an issue)
+        if 'debug_tts' in st.session_state:
+            st.text(f"Debug: {st.session_state.debug_tts}")
 
     # Rerun to update the UI
     st.experimental_rerun()
