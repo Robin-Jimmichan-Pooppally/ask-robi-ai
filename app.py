@@ -428,35 +428,47 @@ def fetch_readme_lines(repo_url, max_lines=20):
 
 def speak_text(text):
     try:
-        # Debug: Show we're entering the function
-        st.session_state.debug_tts = "TTS function called"
-        
         # Limit text length to prevent very long audio generation
-        if len(text) > 100:
-            text = text[:100] + "... [truncated]"
+        if len(text) > 300:
+            text = text[:300] + "... [truncated]"
         
         # Create a placeholder for the audio
         audio_placeholder = st.empty()
         
         # Generate speech using gTTS
-        tts = gTTS(text=text, lang='en', slow=False)
+        tts = gTTS(text=text, lang='en', tld='com', slow=False)
         
-        # Use BytesIO to handle the audio in memory
-        audio_buffer = BytesIO()
-        tts.write_to_fp(audio_buffer)
-        audio_buffer.seek(0)
+        # Save to a temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as fp:
+            temp_filename = fp.name
+        
+        # Save the audio to the temporary file
+        tts.save(temp_filename)
+        
+        # Play the audio file
+        audio_bytes = open(temp_filename, 'rb').read()
         
         # Display the audio player
-        audio_placeholder.audio(audio_buffer, format='audio/mp3')
+        audio_placeholder.audio(audio_bytes, format='audio/mp3')
         
-        # Debug: Show success
-        st.session_state.debug_tts = "Audio generated and displayed"
+        # Clean up the temporary file
+        try:
+            os.unlink(temp_filename)
+        except:
+            pass
         
         return True
         
     except Exception as e:
-        st.session_state.debug_tts = f"TTS Error: {str(e)}"
         st.warning(f"⚠️ TTS Error: {str(e)}")
+        st.warning("""
+        Couldn't generate speech. This might be because:
+        1. No internet connection
+        2. gTTS service is temporarily unavailable
+        3. Your network is blocking the TTS service
+        
+        Please try again later or check your connection.
+        """)
         return False
 
 def save_chat_local(history):
@@ -608,20 +620,16 @@ if submit_button and user_input:
             if success:
                 st.markdown("""
                 <div style='margin: 10px 0; padding: 10px; background: rgba(0, 229, 255, 0.1); border-radius: 8px;'>
-                    <p style='margin: 0; color: #00E5FF;'>🔊 Audio is ready! Click the play button above to listen.</p>
+                    <p style='margin: 0; color: #00E5FF;'>🔊 Click the play button above to listen</p>
                 </div>
                 """, unsafe_allow_html=True)
             else:
                 st.warning("""
-                Couldn't generate speech. Please try these steps:
-                1. Check your internet connection
-                2. Refresh the page and try again
-                3. If the problem persists, try a different browser
+                Couldn't generate speech. This might be because:
+                1. No internet connection
+                2. gTTS service is temporarily unavailable
+                3. Your network is blocking the TTS service
                 """)
-                
-        # Debug info (only shown if there's an issue)
-        if 'debug_tts' in st.session_state:
-            st.text(f"Debug: {st.session_state.debug_tts}")
 
     # Rerun to update the UI
     st.experimental_rerun()
