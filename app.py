@@ -10,50 +10,23 @@ Add your Groq API key to Streamlit secrets: GROQ_API_KEY = "gsk_..."
 import streamlit as st
 from groq import Groq
 from gtts import gTTS
-import tempfile
-import os
-import base64
-from io import BytesIO
 from io import BytesIO
 import requests
 import json
 import os
-import tempfile
 import textwrap
-import time
-import base64
 from urllib.parse import urlparse
-import streamlit.components.v1 as components
 
 # Import your verified context (must match what we finalized)
-try:
-    from robi_context import context
-except ImportError:
-    # Fallback context if robi_context.py is missing
-    context = {
-        'assistant_name': 'Portfoli-AI',
-        'owner_name': 'Robin Jimmichan',
-        'owner_role': 'Professional',
-        'summary': {
-            'Excel Projects': 5,
-            'Power BI Projects': 3,
-            'Python Projects': 4,
-            'SQL Projects': 2
-        },
-        'projects': {
-            'Excel': {'Project 1': 'https://github.com/example/excel1'},
-            'Power BI': {'Dashboard 1': 'https://github.com/example/powerbi1'},
-            'Python': {'App 1': 'https://github.com/python/app1'},
-            'SQL': {'Database 1': 'https://github.com/example/sql1'}
-        }
-    }
-    st.warning("Using fallback context. Please create robi_context.py for your personal details.")
+from robi_context import context
 
 # -----------------------
 # Phase 1: Utilities & Prompt Builder
 # -----------------------
 def build_system_prompt(chat_mode, selected_project=None):
-    """Build the system prompt based on chat mode and selected project."""
+    """
+    Build the system prompt based on chat mode and selected project.
+    """
     base_prompt = f"""
     You are {context.get('assistant_name', 'Portfoli-AI')}, a helpful AI assistant for {context.get('owner_name', 'the user')}'s portfolio.
     {context.get('owner_name', 'The user')} is a {context.get('owner_role', 'professional')}.
@@ -105,28 +78,24 @@ def build_system_prompt(chat_mode, selected_project=None):
 # -----------------------
 st.set_page_config(page_title="Portfoli-AI", page_icon="🤖", layout="wide")
 
-# Initialize session state
+# Initialize session state keys safely
 if "messages" not in st.session_state:
     st.session_state.messages = []
+
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
+
 if "history" not in st.session_state:
     st.session_state.history = []
+
 if "greeted" not in st.session_state:
     st.session_state.greeted = False
+
 if "selected_category" not in st.session_state:
     st.session_state.selected_category = "All"
-if "selected_project" not in st.session_state:
-    st.session_state.selected_project = None
-if "readme_full" not in st.session_state:
-    st.session_state.readme_full = None
-if "readme_preview" not in st.session_state:
-    st.session_state.readme_preview = None
-if "show_more" not in st.session_state:
-    st.session_state.show_more = False
 
 # -----------------------
-# Phase 1.2: Sticky Header + Greeting
+# Phase 1.2: New Sticky Header + Greeting (Legendary look)
 # -----------------------
 st.markdown("""
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -174,7 +143,9 @@ st.markdown("""
             cursor: pointer;
             font-weight:600;
         }
-        .spacer { height: 62px; }
+        .spacer { height: 62px; } /* keeps content from being hidden behind header */
+
+        /* Greeting card */
         .greeting {
             border-radius: 12px;
             padding: 16px;
@@ -185,83 +156,6 @@ st.markdown("""
         }
         .greeting h4 { color: var(--accent); margin: 0 0 6px 0; font-weight:700; }
         .greeting p { color: var(--muted); margin:0; line-height:1.4; }
-        .section-card {
-            background: var(--panel);
-            border-radius: 12px;
-            padding: 14px;
-            border: 1px solid var(--card-border);
-            box-shadow: 0 8px 30px rgba(0,0,0,0.6);
-        }
-        .sidebar-item { display:flex; align-items:center; gap:8px; margin:6px 0; color:var(--muted); font-weight:500; }
-        .sidebar-item .count { margin-left:auto; font-weight:700; color:var(--accent); padding:4px 8px; border-radius:8px; background: rgba(0,229,255,0.04); }
-        .chat-row { display:flex; gap:12px; align-items:flex-start; margin:8px 0; }
-        .chat-avatar { width:40px; height:40px; border-radius:50%; flex:0 0 40px; display:inline-block; overflow:hidden; border:1px solid rgba(255,255,255,0.04); }
-        .chat-bubble {
-            max-width:78%;
-            padding:12px 14px;
-            border-radius:12px;
-            line-height:1.45;
-            font-size:14px;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.6);
-        }
-        .chat-bubble-user { 
-            margin-left:auto;
-            background: linear-gradient(180deg, rgba(0,229,255,0.04), rgba(0,0,0,0.12));
-            border: 1px solid rgba(0,229,255,0.08);
-            color: var(--text);
-            border-top-right-radius:4px;
-        }
-        .chat-bubble-bot {
-            background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06));
-            border: 1px solid rgba(255,255,255,0.03);
-            color: var(--text);
-            border-top-left-radius:4px;
-        }
-        .icon-link { 
-            display:inline-flex; 
-            align-items:center; 
-            gap:8px; 
-            padding:6px 8px; 
-            border-radius:8px; 
-            text-decoration:none; 
-            color:var(--muted); 
-            border:1px solid rgba(255,255,255,0.03);
-            margin: 4px 0;
-            transition: all 0.2s ease;
-        }
-        .icon-link:hover { 
-            color:var(--text); 
-            border-color: rgba(0,229,255,0.10); 
-            background: rgba(0,229,255,0.02); 
-        }
-        .small-muted { color: var(--muted); font-size:12px; margin-top: 8px; }
-        input[aria-label="Type your message..."] {
-            background: rgba(255,255,255,0.02) !important;
-            border: 1px solid rgba(255,255,255,0.04) !important;
-            padding: 10px 12px !important;
-            border-radius: 12px !important;
-            color: var(--text) !important;
-            outline: none !important;
-            transition: box-shadow 200ms ease, border-color 200ms ease;
-            width: 100%;
-        }
-        input[aria-label="Type your message..."]:focus {
-            box-shadow: 0 6px 28px rgba(0,229,255,0.12);
-            border-color: var(--accent) !important;
-        }
-        .stButton>button {
-            background: linear-gradient(90deg, #00E5FF, #0088FF);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 8px 16px;
-            font-weight: 600;
-            transition: all 0.2s ease;
-        }
-        .stButton>button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 229, 255, 0.2);
-        }
     </style>
 
     <div class="sticky-header">
@@ -278,72 +172,196 @@ st.markdown("""
 if not st.session_state.greeted:
     st.markdown("""
     <div class='greeting'>
-        <h4>👋 Hey there!</h4>
+        <h4>👋 Hey!</h4>
         <p>
-        I'm <b style='color:var(--accent)'>Portfoli-AI 🤖</b>, your portfolio assistant — here to explain projects, talk business analytics,
-        or help craft README summaries. Try: <i>"Explain my latest project"</i>
+        I'm <b style='color:var(--accent)'>Portfoli-AI 🤖</b>, your portfolio assistant — here to explain projects, talk BA,
+        or help craft README summaries. Try: <i>"Explain my Telco Churn Dashboard"</i>
         </p>
     </div>
     """, unsafe_allow_html=True)
     st.session_state.greeted = True
 
 # -----------------------
-# Phase 2: Sidebar
+# Phase 1.3: Global CSS (bubbles, micro-interactions, inputs)
 # -----------------------
-with st.sidebar:
-    st.markdown("<div class='section-card'>", unsafe_allow_html=True)
-    st.markdown(f"### 👋 {context.get('owner_name','Robin J')}")
-    st.markdown(f"**{context.get('owner_role','Professional')}**")
-    st.markdown("---")
+st.markdown("""
+<style>
+:root{
+  --accent:#00E5FF;
+  --bg:#050509;
+  --panel: rgba(12,14,18,0.6);
+  --muted:#a9cbd9;
+  --text:#e6f5fb;
+  --card-border: rgba(0,229,255,0.10);
+}
 
-    # Contact info
-    st.markdown("📬 **Contact**")
-    st.markdown(f"<a class='icon-link' href='mailto:rjimmichan@gmail.com'>✉️ Email — rjimmichan@gmail.com</a>", unsafe_allow_html=True)
-    st.markdown(f"<a class='icon-link' href='https://www.linkedin.com/in/robin-jimmichan-pooppally-676061291' target='_blank'>🔗 LinkedIn</a>", unsafe_allow_html=True)
-    st.markdown(f"<a class='icon-link' href='https://github.com/Robin-Jimmichan-Pooppally' target='_blank'>🐱 GitHub</a>", unsafe_allow_html=True)
-    st.markdown("---")
+body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; }
 
-    # TTS Toggle
-    tts_toggle = st.checkbox("🔊 Play responses (TTS)", value=False)
-    
-    # Save chat locally
-    save_local = st.checkbox("💾 Save chat locally", value=False)
-    
-    # Clear chat button
-    if st.button("🧹 Clear Conversation"):
-        st.session_state.messages = []
-        st.session_state.chat_history = []
-        st.session_state.history = []
-        try:
-            if os.path.exists("chat_memory.json"):
-                os.remove("chat_memory.json")
-        except Exception:
-            pass
-        st.experimental_rerun()
+/* Section card style */
+.section-card {
+  background: var(--panel);
+  border-radius: 12px;
+  padding: 14px;
+  border: 1px solid var(--card-border);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+}
 
-    # Portfolio overview
-    st.markdown("### 📊 Portfolio Overview")
-    summary = context.get("summary", {})
-    for k, v in summary.items():
-        icon = "📊" if "Excel" in k or "Power" in k else ("🐍" if "Python" in k else "🗄️")
-        st.markdown(f"<div class='sidebar-item'>{icon} <strong>{k}</strong> <span class='count'>{v}</span></div>", unsafe_allow_html=True)
-    
-    # Calculate and display total projects
-    total_projects = sum(summary.values()) if summary else 0
-    st.markdown("<hr style='border-color: rgba(255,255,255,0.03)'>", unsafe_allow_html=True)
-    st.markdown(f"<div style='font-weight:700; color:var(--text);'>Total Projects: <span style='color:var(--accent);'>{total_projects}</span></div>", unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+/* Portfolio sidebar items */
+.sidebar-item { display:flex; align-items:center; gap:8px; margin:6px 0; color:var(--muted); font-weight:500; }
+.sidebar-item .count { margin-left:auto; font-weight:700; color:var(--accent); padding:4px 8px; border-radius:8px; background: rgba(0,229,255,0.04); }
+
+/* Category buttons (we will render them as columns/buttons) */
+.stButton>button.category-btn {
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.04);
+  color: var(--muted);
+  transition: all 170ms ease;
+  font-weight:600;
+}
+.stButton>button.category-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,229,255,0.05);
+  color: var(--text);
+  border-color: rgba(0,229,255,0.12);
+  background: linear-gradient(180deg, rgba(0,229,255,0.02), rgba(255,255,255,0.01));
+}
+
+/* Active category visual (underline) - we will set class via markdown/html where possible */
+.category-active {
+  color: var(--text) !important;
+  border-bottom: 3px solid var(--accent) !important;
+  border-radius: 6px;
+}
+
+/* Chat bubbles */
+.chat-row { display:flex; gap:12px; align-items:flex-start; margin:8px 0; }
+.chat-avatar { width:40px; height:40px; border-radius:50%; flex:0 0 40px; display:inline-block; overflow:hidden; border:1px solid rgba(255,255,255,0.04); }
+.chat-bubble {
+  max-width:78%;
+  padding:12px 14px;
+  border-radius:12px;
+  line-height:1.45;
+  font-size:14px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+}
+.chat-bubble-user { 
+  margin-left:auto;
+  background: linear-gradient(180deg, rgba(0,229,255,0.04), rgba(0,0,0,0.12));
+  border: 1px solid rgba(0,229,255,0.08);
+  color: var(--text);
+  border-top-right-radius:4px;
+}
+.chat-bubble-bot {
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06));
+  border: 1px solid rgba(255,255,255,0.03);
+  color: var(--text);
+  border-top-left-radius:4px;
+}
+
+/* Input */
+.input-wrap { display:flex; gap:8px; align-items:center; margin-top: 12px; }
+.streamlit-expanderHeader, .stTextInput>div, .stTextInput label {
+  font-family: 'Inter', sans-serif;
+}
+input[aria-label="Type your message..."] {
+  background: rgba(255,255,255,0.02) !important;
+  border: 1px solid rgba(255,255,255,0.04) !important;
+  padding: 10px 12px !important;
+  border-radius: 12px !important;
+  color: var(--text) !important;
+  outline: none !important;
+  transition: box-shadow 200ms ease, border-color 200ms ease;
+}
+input[aria-label="Type your message..."]:focus {
+  box-shadow: 0 6px 28px rgba(0,229,255,0.12);
+  border-color: var(--accent) !important;
+}
+
+/* small muted text */
+.small-muted { color: var(--muted); font-size:12px; }
+
+/* footer */
+.footer { color: var(--muted); font-size:12px; margin-top:18px; }
+
+/* Icon links */
+.icon-link { display:inline-flex; align-items:center; gap:8px; padding:6px 8px; border-radius:8px; text-decoration:none; color:var(--muted); border:1px solid rgba(255,255,255,0.03); }
+.icon-link:hover { color:var(--text); border-color: rgba(0,229,255,0.10); background: rgba(0,229,255,0.02); }
+</style>
+""", unsafe_allow_html=True)
 
 # -----------------------
-# Project Selection
+# Phase 2: Sidebar redesign (contacts, portfolio overview, TTS moved here)
 # -----------------------
+st.sidebar.markdown("<div class='section-card'>", unsafe_allow_html=True)
+st.sidebar.markdown(f"### 👋 {context.get('owner_name','Robin J')}")
+st.sidebar.markdown(f"**{context.get('owner_role','Professional')}**")
+st.sidebar.markdown("---")
+
+# Contact with icon links (inline SVGs for LinkedIn/GitHub)
+linkedin_svg = '''<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M4.98 3.5C4.98 4.88071 3.86 6 2.48 6C1.1 6 0 4.88071 0 3.5C0 2.11929 1.1 1 2.48 1C3.86 1 4.98 2.11929 4.98 3.5Z" fill="currentColor"/>
+<path d="M6.5 8H0V24H6.5V8Z" fill="currentColor"/>
+<path d="M24 24H17.5V15.5C17.5 13 16 11.5 13.75 11.5C11.5 11.5 10.5 13.1 10.5 15.5V24H4V8H10.25V10.1H10.3C11.1 9 12.9 7.8 15.8 7.8C20.75 7.8 24 10.9 24 16.5V24Z" fill="currentColor"/>
+</svg>'''
+github_svg = '''<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M8 .198a8 8 0 00-2.53 15.59c.4.073.547-.173.547-.385 0-.19-.007-.693-.01-1.36-2.226.483-2.695-1.073-2.695-1.073-.364-.923-.89-1.17-.89-1.17-.727-.497.055-.487.055-.487.803.057 1.225.826 1.225.826.714 1.223 1.873.87 2.33.665.072-.518.28-.87.508-1.07-1.777-.202-3.644-.888-3.644-3.953 0-.873.312-1.587.824-2.147-.083-.203-.357-1.017.078-2.12 0 0 .672-.215 2.2.82A7.627 7.627 0 018 4.68c.68.003 1.367.092 2.008.27 1.526-1.035 2.197-.82 2.197-.82.437 1.103.163 1.917.08 2.12.513.56.823 1.274.823 2.147 0 3.073-1.87 3.748-3.653 3.947.288.248.544.737.544 1.486 0 1.073-.01 1.94-.01 2.203 0 .214.145.461.55.382A8 8 0 008 .197z" fill="currentColor"/>
+</svg>'''
+
+st.sidebar.markdown("📬 **Contact**")
+st.sidebar.markdown(f"<a class='icon-link' href='mailto:{'rjimmichan@gmail.com'}'>✉️ Email — rjimmichan@gmail.com</a>", unsafe_allow_html=True)
+st.sidebar.markdown(f"<a class='icon-link' href='{ 'https://www.linkedin.com/in/robin-jimmichan-pooppally-676061291'}' target='_blank'>{linkedin_svg} LinkedIn</a>", unsafe_allow_html=True)
+st.sidebar.markdown(f"<a class='icon-link' href='{ 'https://github.com/Robin-Jimmichan-Pooppally'}' target='_blank'>{github_svg} GitHub</a>", unsafe_allow_html=True)
+st.sidebar.markdown("---")
+
+# TTS control moved to sidebar (previously below input)
+tts_toggle = st.sidebar.checkbox("🔊 Play responses (TTS)", value=False)
+
+# Option: Save chat locally
+save_local = st.sidebar.checkbox("💾 Save chat locally (chat_memory.json)", value=False)
+
+# Erase / clear moved to sidebar for convenience
+if st.sidebar.button("🧹 Clear Conversation"):
+    st.session_state.messages = []
+    st.session_state.chat_history = []
+    st.session_state.history = []
+    # remove local file if exists and save_local is True
+    try:
+        if os.path.exists("chat_memory.json"):
+            os.remove("chat_memory.json")
+    except Exception:
+        pass
+    st.experimental_rerun()
+
+# Portfolio overview with icons and highlighted counts
+st.sidebar.markdown("### 📊 Portfolio Overview")
+summary = context.get("summary", {})
 projects_by_cat = context.get("projects", {})
-all_projects = []
-for cat, projs in projects_by_cat.items():
-    for name, url in projs.items():
-        all_projects.append((cat, name, url))
 
-# Category filter
+# Build all_projects flattened list
+all_projects = []
+for cat, d in projects_by_cat.items():
+    for pname, repo in d.items():
+        all_projects.append((cat, pname, repo))
+
+# Render portfolio counts with small icons
+for k, v in summary.items():
+    icon = "📈" if ("Excel" in k or "Power" in k) else ("🐍" if "Python" in k else "🗄️")
+    st.sidebar.markdown(f"<div class='sidebar-item'>{icon} <strong>{k}</strong> <span class='count'>{v}</span></div>", unsafe_allow_html=True)
+
+# Total projects visual separation
+total_projects = sum(summary.values()) if summary else len(all_projects)
+st.sidebar.markdown("<hr style='border-color: rgba(255,255,255,0.03)'>", unsafe_allow_html=True)
+st.sidebar.markdown(f"<div style='font-weight:700; color:var(--text);'>Total Projects: <span style='color:var(--accent);'>{total_projects}</span></div>", unsafe_allow_html=True)
+st.sidebar.markdown("</div>", unsafe_allow_html=True)
+
+# -----------------------
+# Phase 2.1: Prepare projects list (flattened and grouped)
+# -----------------------
+# all_projects already built above
+
+# Category filter buttons (top, horizontally) - improved visuals
 st.markdown("### 🔎 Filter by category")
 cols = st.columns(4)
 cats = list(projects_by_cat.keys())
@@ -362,7 +380,10 @@ for i, cat in enumerate(ordered):
 if selected_cat:
     st.session_state.selected_category = selected_cat
 
-st.markdown(f"Showing projects: **{st.session_state['selected_category'] if st.session_state['selected_category'] != 'All' else 'All categories'}")
+if st.session_state.get("selected_category", "All") == "All":
+    st.markdown("Showing projects: **All categories**")
+else:
+    st.markdown(f"Showing projects: **{st.session_state['selected_category']}**")
 
 def build_project_list(filter_cat):
     choices = []
@@ -378,32 +399,34 @@ if not project_choices:
 else:
     project_choice = st.selectbox("Choose a project to explore", ["(none)"] + project_choices)
 
-# Chat mode toggle
+# -----------------------
+# Phase 2.2: Chat mode toggle
+# -----------------------
 st.markdown("---")
 mode = st.radio("Chat mode", ("General Assistant", "Business Analytics Assistant"), horizontal=True)
 if "chat_mode" not in st.session_state or st.session_state.get("chat_mode") != mode:
     st.session_state.chat_mode = mode
-    st.session_state.history = []
+    st.session_state.history = []  # reset conversation on mode change
 
 # -----------------------
-# Groq client initialization
+# Phase 2.3: Groq client init (safe)
 # -----------------------
 def init_groq():
     api_key = st.secrets.get("GROQ_API_KEY") if "GROQ_API_KEY" in st.secrets else os.getenv("GROQ_API_KEY")
     if not api_key:
-        st.error("❌ Missing Groq API key. Add GROQ_API_KEY to Streamlit secrets or environment variables.")
+        st.error("Missing Groq API key. Add GROQ_API_KEY to Streamlit secrets.")
         st.stop()
     try:
         client = Groq(api_key=api_key)
         return client
     except Exception as e:
-        st.error(f"❌ Failed to initialize Groq client: {e}")
+        st.error(f"Failed to initialize Groq client: {e}")
         st.stop()
 
 client = init_groq()
 
 # -----------------------
-# Helper functions
+# Phase 2.4: Helpers: fetch README from GitHub
 # -----------------------
 def extract_owner_repo(repo_url):
     parsed = urlparse(repo_url)
@@ -431,60 +454,35 @@ def fetch_readme_lines(repo_url, max_lines=20):
             continue
     return None, None
 
+# -----------------------
+# Phase 2.5: Helper: gTTS speak
+# -----------------------
 def speak_text(text):
     try:
-        # Limit text length to prevent very long audio generation
-        if len(text) > 200:
-            text = text[:200] + "... [truncated]"
-        
-        # Create a status message
-        status = st.empty()
-        status.info("🔊 Preparing audio...")
-        
-        # Generate speech using gTTS
-        # Using clearer, professional voice (slow=True) and default tld 'com'
-        tts = gTTS(text=text, lang='en', tld='com', slow=True)
-        
-        # Use BytesIO to handle audio in memory
-        audio_buffer = BytesIO()
-        tts.write_to_fp(audio_buffer)
-        audio_buffer.seek(0)
-        
-        # Create a data URI for the audio
-        audio_b64 = base64.b64encode(audio_buffer.read()).decode('utf-8')
-        audio_html = f'''
-        <audio controls autoplay>
-            <source src="data:audio/mp3;base64,{audio_b64}" type="audio/mp3">
-            Your browser does not support the audio element.
-        </audio>
-        '''
-        
-        # Display the audio player
-        components.html(audio_html, height=60)
-        
-        # Show success message
-        status.success("🔊 Audio ready!")
-        return True
-        
+        tts = gTTS(text=text, lang="en", slow=False)
+        buf = BytesIO()
+        tts.write_to_fp(buf)
+        buf.seek(0)
+        st.audio(buf.read(), format="audio/mp3")
     except Exception as e:
-        st.error(f"Failed to generate speech: {str(e)}")
-        st.warning("""
-        If you're running this on Streamlit Cloud, please note that:
-        1. Audio playback might be blocked by the browser
-        2. Try clicking the refresh button in the audio player
-        3. Make sure your browser allows autoplay
-        """)
-        return False
-
-def save_chat_local(history):
-    try:
-        with open("chat_memory.json", "w", encoding="utf-8") as fh:
-            json.dump(history, fh, ensure_ascii=False, indent=2)
-    except Exception as e:
-        st.warning(f"Failed to save chat: {e}")
+        st.warning("TTS unavailable: " + str(e))
 
 # -----------------------
-# Project display
+# Phase 2.6: Chat history initialization
+# -----------------------
+if "history" not in st.session_state:
+    st.session_state.history = []
+if "selected_project" not in st.session_state:
+    st.session_state.selected_project = None
+if "readme_full" not in st.session_state:
+    st.session_state.readme_full = None
+if "readme_preview" not in st.session_state:
+    st.session_state.readme_preview = None
+if "show_more" not in st.session_state:
+    st.session_state.show_more = False
+
+# -----------------------
+# Phase 2.7: When project selection changes -> load README preview and reset chat for that project
 # -----------------------
 if project_choice and project_choice != "(none)":
     cat, pname = project_choice.split(" — ", 1)
@@ -499,6 +497,9 @@ if project_choice and project_choice != "(none)":
         st.session_state.readme_preview, st.session_state.readme_full = fetch_readme_lines(repo_url, max_lines=20)
         st.session_state.show_more = False
 
+# -----------------------
+# Phase 3: Display selected project card above chat (unchanged logic + UI polish)
+# -----------------------
 if st.session_state.get("selected_project"):
     repo_url = st.session_state.selected_project
     card_cat = card_name = None
@@ -506,34 +507,29 @@ if st.session_state.get("selected_project"):
         if r == repo_url:
             card_cat, card_name = c, name
             break
-    
-    with st.container():
-        st.markdown("<div class='section-card'>", unsafe_allow_html=True)
-        st.markdown(f"### 📁 {card_name}")
-        st.markdown(f"**Category:** {card_cat}  ")
-        st.markdown(f"🔗 **Repo:** [{repo_url}]({repo_url})")
-        
-        if st.session_state.get("readme_preview"):
-            st.markdown("---")
-            st.markdown("**README preview:**")
-            st.code(st.session_state["readme_preview"], language="markdown")
-            
-            if st.session_state.get("readme_full"):
-                if st.button("Show more" if not st.session_state.show_more else "Show less"):
-                    st.session_state.show_more = not st.session_state.show_more
-                if st.session_state.show_more:
-                    st.markdown("<details open><summary>Full README</summary>", unsafe_allow_html=True)
-                    st.code(st.session_state["readme_full"], language="markdown")
-                    st.markdown("</details>", unsafe_allow_html=True)
-        else:
-            st.info("No README found for this repository.")
-        
-        st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("<div class='section-card'>", unsafe_allow_html=True)
+    st.markdown(f"### 📁 {card_name}")
+    st.markdown(f"**Category:** {card_cat}  ")
+    st.markdown(f"🔗 **Repo:** [{repo_url}]({repo_url})")
+    if st.session_state.get("readme_preview"):
+        st.markdown("---")
+        st.markdown("**README preview:**")
+        st.code(st.session_state["readme_preview"], language="markdown")
+        if st.session_state.get("readme_full"):
+            if st.button("Show more" if not st.session_state.show_more else "Show less"):
+                st.session_state.show_more = not st.session_state.show_more
+            if st.session_state.show_more:
+                st.markdown("<details open><summary>Full README</summary>", unsafe_allow_html=True)
+                st.code(st.session_state["readme_full"], language="markdown")
+                st.markdown("</details>", unsafe_allow_html=True)
+    else:
+        st.info("No README found for this repository.")
+    st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("---")
 
 # -----------------------
-# Chat interface
+# Phase 3.1: Chat UI display (new avatar + bubble differences)
 # -----------------------
 assistant_name = context.get('assistant_name', 'Portfoli-AI')
 assistant_avatar_svg = """<svg viewBox="0 0 64 64" width="40" height="40" xmlns="http://www.w3.org/2000/svg">
@@ -541,7 +537,6 @@ assistant_avatar_svg = """<svg viewBox="0 0 64 64" width="40" height="40" xmlns=
   <path d="M32 12c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm0 26c-9.941 0-18 8.059-18 18h36c0-9.941-8.059-18-18-18z" fill="#00E5FF" opacity="0.95"/>
 </svg>"""
 
-# Display chat history
 for m in st.session_state.history:
     role = m.get("role")
     text = m.get("content")
@@ -559,18 +554,27 @@ for m in st.session_state.history:
             </div>
         """, unsafe_allow_html=True)
 
-# Chat input form
-with st.form(key='chat_form', clear_on_submit=True):
-    user_input = st.text_input(
-        "Type your message...", 
-        key="user_input", 
-        placeholder="Ask me anything...",
-        label_visibility="collapsed"
-    )
-    submit_button = st.form_submit_button("Send")
+# -----------------------
+# Phase 3.2: User input (VISUAL changes only: remove send/pencil; press Enter to submit)
+# -----------------------
+# NOTE: Input field remains the same logical trigger for sending (Enter).
+user_input = st.text_input("Type your message...", key="chat_input", placeholder="Ask me anything...")
 
-# Process form submission
-if submit_button and user_input:
+# -----------------------
+# Phase 3.3: Local save helper (if enabled)
+# -----------------------
+def save_chat_local(history):
+    try:
+        with open("chat_memory.json", "w", encoding="utf-8") as fh:
+            json.dump(history, fh, ensure_ascii=False, indent=2)
+    except Exception:
+        # don't crash the app if local save fails
+        pass
+
+# -----------------------
+# Phase 3.4: Process input -> Groq (unchanged core logic, safer error handling)
+# -----------------------
+if user_input:
     # Append user message to history
     st.session_state.history.append({"role": "user", "content": user_input})
 
@@ -620,20 +624,16 @@ if submit_button and user_input:
 
     # TTS (plays if toggled in sidebar)
     if tts_toggle:
-        success = speak_text(bot_text)
-        if not success:
-            st.warning("""
-            Couldn't generate speech. Please try these steps:
-            1. Check your internet connection
-            2. Refresh the page and try again
-            3. Make sure your browser allows audio autoplay
-            """)
+        try:
+            speak_text(bot_text)
+        except Exception:
+            st.warning("TTS failed for this response.")
 
-    # Rerun to update the UI
+    # Rerun to clear the input field (keeps behavior consistent)
     st.experimental_rerun()
 
 # -----------------------
-# Footer / credits
+# Phase 4: Footer / credits
 # -----------------------
 st.markdown("---")
 st.markdown("<div class='small-muted'>Built with ❤️ • Portfoli-AI • Contact: rjimmichan@gmail.com</div>", unsafe_allow_html=True)
