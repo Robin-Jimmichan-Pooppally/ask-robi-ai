@@ -23,6 +23,7 @@ import textwrap
 import time
 import base64
 from urllib.parse import urlparse
+import streamlit.components.v1 as components
 
 # Import your verified context (must match what we finalized)
 try:
@@ -441,7 +442,8 @@ def speak_text(text):
         status.info("🔊 Preparing audio...")
         
         # Generate speech using gTTS
-        tts = gTTS(text=text, lang='en', slow=False)
+        # Using clearer, professional voice (slow=True) and default tld 'com'
+        tts = gTTS(text=text, lang='en', tld='com', slow=True)
         
         # Use BytesIO to handle audio in memory
         audio_buffer = BytesIO()
@@ -458,7 +460,7 @@ def speak_text(text):
         '''
         
         # Display the audio player
-        st.components.v1.html(audio_html, height=50)
+        components.html(audio_html, height=60)
         
         # Show success message
         status.success("🔊 Audio ready!")
