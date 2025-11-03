@@ -9,7 +9,7 @@ Add your Groq API key to Streamlit secrets: GROQ_API_KEY = "gsk_..."
 # -----------------------
 import streamlit as st
 from groq import Groq
-from streamlit_tts import text_to_speech
+from gtts import gTTS
 from io import BytesIO
 import requests
 import json
@@ -429,26 +429,37 @@ def fetch_readme_lines(repo_url, max_lines=20):
 def speak_text(text):
     try:
         # Limit text length to prevent very long audio generation
-        if len(text) > 1000:
-            text = text[:1000] + "... [truncated]"
+        if len(text) > 500:
+            text = text[:500] + "... [truncated]"
         
-        # Create a placeholder for the status
-        status_placeholder = st.empty()
-        status_placeholder.info("🔊 Preparing speech...")
+        # Create a placeholder for the audio
+        audio_placeholder = st.empty()
         
-        # Generate and play speech using streamlit-tts
-        text_to_speech(
-            text=text,
-            voice="en-US-Neural2-F",  # Natural-sounding female voice
-            language="en",
-            slow=False
-        )
+        # Generate speech using gTTS
+        tts = gTTS(text=text, lang='en', slow=False)
         
-        # Update status
-        status_placeholder.empty()
+        # Save to a temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as fp:
+            temp_filename = fp.name
+        
+        # Save the audio to the temporary file
+        tts.save(temp_filename)
+        
+        # Play the audio file
+        audio_bytes = open(temp_filename, 'rb').read()
+        
+        # Display the audio player
+        audio_placeholder.audio(audio_bytes, format='audio/mp3')
+        
+        # Clean up the temporary file
+        try:
+            os.unlink(temp_filename)
+        except:
+            pass
+        
         st.markdown("""
         <div style='margin: 10px 0; padding: 10px; background: rgba(0, 229, 255, 0.1); border-radius: 8px;'>
-            <p style='margin: 0; color: #00E5FF;'>🔊 Audio is ready! It should play automatically.</p>
+            <p style='margin: 0; color: #00E5FF;'>🔊 Click the play button above to listen</p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -459,13 +470,10 @@ def speak_text(text):
         st.warning("""
         Couldn't generate speech. This might be because:
         1. No internet connection
-        2. The TTS service is temporarily unavailable
-        3. Your browser is blocking audio autoplay
+        2. gTTS service is temporarily unavailable
+        3. Your network is blocking the TTS service
         
-        Please try these steps:
-        1. Check your internet connection
-        2. Refresh the page and try again
-        3. Make sure your browser allows audio autoplay
+        Please try again later or check your connection.
         """)
         return False
 
@@ -630,3 +638,4 @@ if submit_button and user_input:
 # -----------------------
 st.markdown("---")
 st.markdown("<div class='small-muted'>Built with ❤️ • Portfoli-AI • Contact: rjimmichan@gmail.com</div>", unsafe_allow_html=True)
+
