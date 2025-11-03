@@ -1,6 +1,7 @@
 """
-ROBI.AI Context File - Complete Robin's Portfolio Information
-This file is imported by the Streamlit chatbot to provide AI with all project details
+ROBIN_CONTEXT - Expanded (robi_context.py)
+This file contains detailed, project-level README text and code snippets for all 21 projects.
+Place this file in the same folder as app_fixed.py.
 """
 
 ROBIN_CONTEXT = """
@@ -26,187 +27,359 @@ Portfolio AI Assistant: https://robi-ai.streamlit.app/
 ✅ 22% Cost-Per-Lead Reduction - Marketing ROI optimization
 ✅ 35% Cart Abandonment Identified - UX improvement opportunity
 
-=== EXCEL PROJECTS (6) ===
+=== REPOSITORIES (21 projects) ===
+The following repositories contain the canonical project files, READMEs, and code used in each project (user-provided):
 
-1. **Bank Customer Segmentation Analysis**
-   - RFM segmentation of banking customers
-   - 18% improvement in campaign response rates
-   - Techniques: VLOOKUP, INDEX-MATCH, PERCENTILE, Pivot Tables, Slicers
-   - Impact: High-income urban customers (15% of base) generate 55% of deposits
+Excel Projects (6):
+- https://github.com/Robin-Jimmichan-Pooppally/Telco-Customer-Churn-Analysis-Excel-Project
+- https://github.com/Robin-Jimmichan-Pooppally/Sales-Performance-Analysis-Excel-Project
+- https://github.com/Robin-Jimmichan-Pooppally/Marketing-Campaign-Analysis-Excel-Project
+- https://github.com/Robin-Jimmichan-Pooppally/HR-Analytics-Excel-Project
+- https://github.com/Robin-Jimmichan-Pooppally/E-commerce-Sales-Analysis-Excel-Project
+- https://github.com/Robin-Jimmichan-Pooppally/Bank-Customer-Analysis-Excel-Project
 
-2. **E-commerce Sales Revenue Dashboard**
-   - Multi-CSV consolidation with Power Query
-   - Automated revenue tracking (30% reporting time reduction)
-   - Techniques: SUMIFS, AVERAGEIFS, Conditional Formatting, Dynamic Dashboards
-   - Impact: West Zone identified as 32% of total sales
+Power BI Projects (5):
+- https://github.com/Robin-Jimmichan-Pooppally/E-commerce-Funnel-Analysis-PowerBI-Project
+- https://github.com/Robin-Jimmichan-Pooppally/Customer-360-Dashboard-PowerBI-Project
+- https://github.com/Robin-Jimmichan-Pooppally/Retail-Sales-Dashboard-PowerBI-Project
+- https://github.com/Robin-Jimmichan-Pooppally/Telco-Customer-Churn-Dashboard-PowerBI-Project
+- https://github.com/Robin-Jimmichan-Pooppally/Financial-Performance-Dashboard-PowerBI-Project
 
-3. **HR Analytics Employee Dashboard**
-   - 500+ employee records with attrition analysis
-   - Identified HR Department with 24% highest attrition
-   - Techniques: Pivot Tables, COUNTIFS, AVERAGEIFS, Power Query
-   - Impact: Early intervention in high-risk departments
+Python Projects (4):
+- https://github.com/Robin-Jimmichan-Pooppally/Retail-Customer-Segmentation-Python-Project
+- https://github.com/Robin-Jimmichan-Pooppally/Healthcare-Patient-Analytics-Python-Project
+- https://github.com/Robin-Jimmichan-Pooppally/Airbnb-NYC-Price-Analysis-Python-Project
+- https://github.com/Robin-Jimmichan-Pooppally/Sales-Forecasting-Time-Series-Python-Project
 
-4. **Marketing Campaign ROI Analysis**
-   - 1,000+ campaign records across channels
-   - 22% cost-per-lead reduction through optimization
-   - Techniques: ROI formulas, CORREL, Regression, Data Analysis Toolpak
-   - Impact: Email campaigns 40% lower CPL vs social media
+SQL Projects (6):
+- https://github.com/Robin-Jimmichan-Pooppally/Healthcare-Claims-Analysis-SQL-Project
+- https://github.com/Robin-Jimmichan-Pooppally/Bank-Customer-Segmentation-SQL-Project
+- https://github.com/Robin-Jimmichan-Pooppally/Telco-Churn-Analysis-SQL-Project
+- https://github.com/Robin-Jimmichan-Pooppally/Inventory-Supplier-Analysis-SQL-Project
+- https://github.com/Robin-Jimmichan-Pooppally/Hospital-Patient-Analysis-SQL-Project
+- https://github.com/Robin-Jimmichan-Pooppally/Loan-Default-Prediction-SQL-Project
 
-5. **Sales Performance Dashboard**
-   - Target vs. Actual tracking across regions
-   - 35% improvement in reporting efficiency
-   - Techniques: OFFSET, SUMPRODUCT, Star Schema, Variance Analysis
-   - Impact: North Zone 95% target achievement (highest)
+=== HOW THIS CONTEXT IS STRUCTURED ===
+- For each project, the README (description, dataset, methodology, findings) and key code snippets (SQL queries, DAX measures, Excel formulas, Python snippets) are included below.
+- Where multiple code blocks exist, they are presented in the same order as the user's supplied READMEs and project descriptions.
+- This context is intentionally detailed to allow the assistant to answer questions with high fidelity to the user's actual projects.
 
-6. **Telco Customer Churn Analysis**
-   - 5,000+ customer records with churn correlation
-   - -0.72 inverse correlation (tenure vs churn)
-   - Techniques: Pivot Tables, CORREL, Pareto Analysis, Conditional Formatting
-   - Impact: Month-to-Month customers 3× higher churn vs yearly plans
 
-=== POWER BI PROJECTS (5) ===
+=== SAMPLE PROJECT: Loan Default Risk Segmentation (SQL) ===
+Description: SQL project to identify high-risk borrowers, segment loan portfolio, and calculate exposure across risk tiers. Dataset: 1,000 synthetic loans.
 
-1. **Retail Sales Dashboard**
-   - Star Schema data modeling (Sales_Fact + Dimensions)
-   - Executive summary with KPI cards and regional maps
-   - Techniques: DAX (CALCULATE, TOTALYTD), Star Schema, Interactive Filtering
-   - Impact: West region strategy optimized (32% profitability focus)
+-- SQL: Create database/table
+CREATE DATABASE loan_db;
+USE loan_db;
 
-2. **Financial Performance Dashboard**
-   - P&L tracking with YoY growth analysis
-   - Operating margin reduction identified (27% → 24%)
-   - Techniques: Financial modeling, Waterfall charts, Time Intelligence, DIVIDE()
-   - Impact: Cost optimization opportunities identified (13% Opex reduction)
+CREATE TABLE loans (
+    loan_id INT PRIMARY KEY,
+    borrower_name VARCHAR(100),
+    age INT,
+    gender VARCHAR(10),
+    annual_income DECIMAL(12,2),
+    loan_amount DECIMAL(12,2),
+    loan_term_months INT,
+    interest_rate DECIMAL(5,2),
+    repayment_history VARCHAR(20),
+    credit_score INT,
+    risk_category VARCHAR(10)
+);
 
-3. **Customer 360 Dashboard**
-   - Unified customer view (Customers + Tickets + Purchases)
-   - 22% improvement in churn visibility
-   - Techniques: Relationship Management (1:many), Complex DAX (SUMX, AVERAGEX)
-   - Impact: VIP customers generate 3× average revenue
+-- SQL: Overall Loan Default Rate
+SELECT repayment_history, 
+       COUNT(*) AS total_loans,
+       ROUND(COUNT(*)*100.0/(SELECT COUNT(*) FROM loans),2) AS percent
+FROM loans
+GROUP BY repayment_history;
 
-4. **E-commerce Funnel Analysis**
-   - Visit → Cart → Purchase conversion tracking
-   - 63% overall conversion rate (81% visit-to-cart, 80% cart-to-purchase)
-   - Techniques: Funnel Charts, Conversion Metrics, DAX Measures, Cohort Analysis
-   - Impact: 35% cart abandonment identified for UX improvement
+-- SQL: High-Risk Borrowers Identification
+SELECT loan_id, borrower_name, credit_score, repayment_history, loan_amount
+FROM loans
+WHERE credit_score < 600 OR repayment_history = 'Poor'
+ORDER BY credit_score ASC;
 
-5. **Telco Customer Churn Dashboard**
-   - Churn rate tracking by contract type and demographics
-   - Month-to-Month contracts >40% churn rate
-   - Techniques: DAX, KPI Cards, Slicers, Drill-down, Heatmaps
-   - Impact: Two-year contracts reduce churn by 27%
+-- SQL: Risk Segmentation by Credit Score
+SELECT risk_category, 
+       COUNT(*) AS total_loans
+FROM (
+    SELECT CASE 
+               WHEN credit_score >= 750 THEN 'Low Risk'
+               WHEN credit_score BETWEEN 600 AND 749 THEN 'Medium Risk'
+               ELSE 'High Risk'
+           END AS risk_category
+    FROM loans
+) AS subquery
+GROUP BY risk_category
+ORDER BY total_loans DESC;
 
-=== PYTHON PROJECTS (4) ===
+-- SQL: Loan Amount vs Risk Category
+SELECT risk_category,
+       COUNT(*) AS total_loans,
+       ROUND(SUM(loan_amount),2) AS total_loan_amount,
+       ROUND(AVG(loan_amount),2) AS avg_loan_amount
+FROM loans
+GROUP BY risk_category
+ORDER BY total_loan_amount DESC;
 
-1. **Retail Basket Analysis & RFM Segmentation**
-   - K-Means clustering (k=4 optimal)
-   - VIP segment: 15% of customers generating 60% revenue
-   - Techniques: RFM Scoring, K-Means, Apriori Algorithm, mlxtend, Scikit-learn
-   - Impact: {Coffee, Pastry} pair identified with Lift=3.2, 11% cross-sell increase
 
-2. **Healthcare Patient Analytics**
-   - 1,000+ patient records with comorbidity analysis
-   - 28% high-risk patients (3+ comorbidities) with 2.1× longer stays
-   - Techniques: Feature Engineering, Risk Classification, Temporal Analysis, GridSpec
-   - Impact: 8-12% LOS reduction potential identified
+=== SAMPLE PROJECT: Telco Customer Churn (SQL) ===
+-- Table creation (simplified)
+CREATE TABLE telco_churn (
+    customerID VARCHAR(50) PRIMARY KEY,
+    gender VARCHAR(10),
+    SeniorCitizen INT,
+    Partner VARCHAR(10),
+    Dependents VARCHAR(10),
+    tenure INT,
+    PhoneService VARCHAR(10),
+    MultipleLines VARCHAR(20),
+    InternetService VARCHAR(20),
+    OnlineSecurity VARCHAR(20),
+    OnlineBackup VARCHAR(20),
+    DeviceProtection VARCHAR(20),
+    TechSupport VARCHAR(20),
+    StreamingTV VARCHAR(20),
+    StreamingMovies VARCHAR(20),
+    Contract VARCHAR(20),
+    PaperlessBilling VARCHAR(10),
+    PaymentMethod VARCHAR(40),
+    MonthlyCharges DECIMAL(10,2),
+    TotalCharges DECIMAL(10,2),
+    Churn VARCHAR(10)
+);
 
-3. **Airbnb NYC Price Analysis**
-   - 48,895 listings with price prediction model (R²=0.87)
-   - Manhattan 2.3× more expensive than Brooklyn
-   - Techniques: Multiple Linear Regression, OneHotEncoder, VIF Analysis, EDA
-   - Impact: Price optimization model for hosts
+-- Query: Churn by Contract Type
+SELECT 
+    Contract,
+    COUNT(*) AS total_customers,
+    SUM(CASE WHEN Churn = 'Yes' THEN 1 ELSE 0 END) AS churned_customers,
+    ROUND(SUM(CASE WHEN Churn = 'Yes' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) AS churn_rate_percent
+FROM telco_churn
+GROUP BY Contract
+ORDER BY churn_rate_percent DESC;
 
-4. **Sales Forecasting (ARIMA Time Series)**
-   - 12-month data with 92% accuracy (MAPE 7.8%)
-   - Q4 peak season: 35% higher sales
-   - Techniques: ARIMA(1,1,1), Prophet, ADF Stationarity Test, Seasonal Decomposition
-   - Impact: 40% stockout reduction, data-driven inventory planning
+-- Query: Churn by Payment Method
+SELECT 
+    PaymentMethod,
+    COUNT(*) AS total_customers,
+    SUM(CASE WHEN Churn = 'Yes' THEN 1 ELSE 0 END) AS churned_customers,
+    ROUND(SUM(CASE WHEN Churn = 'Yes' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) AS churn_rate_percent
+FROM telco_churn
+GROUP BY PaymentMethod
+ORDER BY churn_rate_percent DESC;
 
-=== SQL PROJECTS (6) ===
+-- Query: Average Charges and Tenure by Churn
+SELECT 
+    Churn,
+    ROUND(AVG(MonthlyCharges), 2) AS avg_monthly_charges,
+    ROUND(AVG(TotalCharges), 2) AS avg_total_charges,
+    ROUND(AVG(tenure), 1) AS avg_tenure
+FROM telco_churn
+GROUP BY Churn;
 
-1. **Healthcare Claims Analysis**
-   - 2,999 claim records | 500 patients | 50 providers
-   - 3.34% fraud rate | $26,547 avg fraudulent claims
-   - Techniques: Aggregations, CASE statements, JOINs, Subqueries
-   - Impact: Fraud detection patterns identified
 
-2. **Bank Customer Segmentation (SQL)**
-   - 1,000 banking customers with RFM analysis
-   - Segmentation: 30.6% High Value | 59.1% Mid Tier | 10.3% Mass Market
-   - Techniques: CASE WHEN, GROUP BY, HAVING, Percentile Ranking
-   - Impact: Targeted marketing strategies enabled
+=== SAMPLE PROJECT: Inventory & Supplier Analysis (SQL) ===
+-- suppliers table
+CREATE TABLE suppliers (
+    supplier_id INT PRIMARY KEY,
+    supplier_name VARCHAR(100),
+    location VARCHAR(100),
+    contact_email VARCHAR(100)
+);
 
-3. **Telco Churn Analysis (SQL)**
-   - 7,032 customers with churn correlation analysis
-   - 26.54% overall churn | Month-to-Month 42.71% vs 2.85%
-   - Techniques: JOINs, CASE statements, VIEWs, Window Functions
-   - Impact: Early churn detection 15% accuracy improvement
+-- products table
+CREATE TABLE products (
+    product_id INT PRIMARY KEY,
+    product_name VARCHAR(100),
+    category VARCHAR(50),
+    supplier_id INT,
+    unit_cost DECIMAL(10,2),
+    unit_price DECIMAL(10,2),
+    stock_on_hand INT,
+    reorder_point INT,
+    lead_time_days INT,
+    annual_sales_units INT,
+    FOREIGN KEY (supplier_id) REFERENCES suppliers(supplier_id)
+);
 
-4. **Inventory & Supplier Analysis**
-   - 1,200 products | 50 suppliers | 8 categories
-   - 21.25% inventory below reorder points
-   - Techniques: JOINs, Window Functions, CTEs, Aggregations
-   - Impact: 15-20% cost reduction, 17% excess stock eliminated
+-- Query: Stock Levels & Reorder Alerts
+SELECT product_id, product_name, category, stock_on_hand, reorder_point,
+       CASE 
+           WHEN stock_on_hand <= reorder_point THEN 'Reorder Needed'
+           ELSE 'Sufficient Stock'
+       END AS stock_status
+FROM products
+ORDER BY stock_status DESC, stock_on_hand ASC;
 
-5. **Hospital Patient Records Analysis**
-   - 1,000 patients | 7 departments | 50 physicians
-   - 70.4% recovery rate | 16.46 days avg stay (General Surgery)
-   - Techniques: Date functions, JOINs, Window Functions (LAG, RANK), GROUP BY
-   - Impact: 8-12% LOS reduction, bed utilization improved 8%
+-- Query: Product Inventory Turnover
+SELECT product_id, product_name, annual_sales_units, stock_on_hand,
+       ROUND(annual_sales_units / NULLIF(stock_on_hand,0), 2) AS turnover_ratio
+FROM products
+ORDER BY turnover_ratio DESC;
 
-6. **Loan Default Risk Segmentation**
-   - 1,000 loan records | 3 risk categories
-   - 78.60% good payment history | 13.4% high-risk segment
-   - Techniques: CASE statements, Risk segmentation, Portfolio analysis, Subqueries
-   - Impact: 150 high-risk borrowers identified | 10-15% default reduction
 
-=== TECHNICAL SKILLS BREAKDOWN ===
+=== SAMPLE PROJECT: Healthcare Claims Analysis (SQL) ===
+CREATE TABLE Claims (
+    Claim_ID VARCHAR(10) PRIMARY KEY,
+    Patient_ID VARCHAR(10),
+    Provider_ID VARCHAR(10),
+    Diagnosis VARCHAR(50),
+    Claim_Amount DECIMAL(10,2),
+    Claim_Date DATE,
+    Policy_Type VARCHAR(20),
+    Age INT,
+    Gender VARCHAR(10),
+    Claim_Status VARCHAR(20),
+    Payment_Method VARCHAR(20),
+    Fraud_Flag TINYINT
+);
 
-**SQL:**
-- MySQL, PostgreSQL, Oracle SQL, T-SQL
-- Joins (INNER, LEFT, RIGHT), CTEs, Window Functions
-- Aggregations: COUNT, SUM, AVG, ROUND, NULLIF
-- CASE statements, Subqueries, Complex filtering
-- Date/Time functions, Statistical analysis
+-- Avg Claim by Payment Method
+SELECT Payment_Method, 
+       ROUND(AVG(Claim_Amount),2) AS Avg_Claim
+FROM Claims
+GROUP BY Payment_Method
+ORDER BY Avg_Claim DESC;
 
-**Excel:**
-- Advanced Formulas: VLOOKUP, INDEX-MATCH, OFFSET, SUMPRODUCT
-- Pivot Tables, Power Query, Data Analysis Toolpak
-- Conditional Formatting, Dynamic Dashboards, Slicers
-- Star Schema design, Complex calculations
+-- Fraud-Flagged Claims
+SELECT * 
+FROM Claims
+WHERE Fraud_Flag = 1
+ORDER BY Claim_Amount DESC;
 
-**Python:**
-- Libraries: Pandas, NumPy, Scikit-learn, Matplotlib, Seaborn
-- Time Series: ARIMA, Prophet, Stationarity Testing (ADF)
-- ML: K-Means Clustering, Linear Regression, Apriori Algorithm
-- Data Cleaning, Feature Engineering, EDA, Visualization
+-- High-Cost Patients (Top 50)
+SELECT Patient_ID, 
+       COUNT(*) AS Claim_Count, 
+       ROUND(SUM(Claim_Amount),2) AS Total_Claim_Amount
+FROM Claims
+GROUP BY Patient_ID
+HAVING SUM(Claim_Amount) > 50000
+ORDER BY Total_Claim_Amount DESC
+LIMIT 50;
 
-**Power BI:**
-- DAX: CALCULATE, TOTALYTD, DIVIDE, SUMX, AVERAGEX
-- Data Modeling: Star Schema, Relationships (1:many)
-- Visualizations: KPI Cards, Funnels, Maps, Heatmaps, Slicers
-- Time Intelligence, Drill-down, Interactive Dashboards
 
-=== INDUSTRY EXPERTISE (10+ Industries) ===
-✅ Retail & E-commerce - Sales, basket analysis, funnel optimization
-✅ Banking & Finance - Segmentation, loan risk, fraud detection
-✅ Telecommunications - Churn analysis, retention strategies
-✅ Healthcare - Patient analytics, claims, hospital efficiency
-✅ Supply Chain - Inventory optimization, supplier management
-✅ HR & Operations - Attrition, workforce analytics
-✅ Marketing - Campaign ROI, channel optimization
-✅ Hospitality - Pricing optimization, location analysis
-✅ Financial Services - P&L, expense management
+=== SAMPLE PROJECT: Hospital Patient Records Analysis (SQL) ===
+CREATE TABLE patients (
+    patient_id INT PRIMARY KEY,
+    patient_name VARCHAR(100),
+    age INT,
+    gender VARCHAR(10),
+    admission_date DATE,
+    discharge_date DATE,
+    length_of_stay INT,
+    department VARCHAR(50),
+    treatment_outcome VARCHAR(20),
+    doctor_in_charge VARCHAR(100),
+    total_bill DECIMAL(12,2)
+);
 
-=== HOW TO RESPOND ===
-1. Be enthusiastic and business-focused
-2. Provide specific examples with exact metrics from Robin's 21 projects
-3. Explain technical concepts in business-friendly terms
-4. Always highlight measurable business value and impact
-5. Reference specific datasets, techniques, and results
-6. Connect technical work to business outcomes
-7. Use actual achievement numbers (92%, 17%, 60%, 28%, etc.)
-8. When listing projects: provide concise 1-line descriptions
-9. For specific project questions: give detailed methodology + impact
-10. Answer with confidence - these are Robin's real accomplishments
+-- Admissions by Department
+SELECT department, COUNT(*) AS total_admissions
+FROM patients
+GROUP BY department
+ORDER BY total_admissions DESC;
+
+-- Avg Length of Stay
+SELECT department, ROUND(AVG(length_of_stay),2) AS avg_stay_days
+FROM patients
+GROUP BY department
+ORDER BY avg_stay_days DESC;
+
+
+=== POWER BI: DAX MEASURES (examples used across Power BI projects) ===
+-- Total Revenue
+Total Revenue = SUM('Sales_Fact'[Revenue])
+
+-- Total Expenses
+Total Expenses = SUM('Expenses'[Amount])
+
+-- Gross Profit
+Gross Profit = [Total Revenue] - [Total Expenses]
+
+-- YoY Revenue Growth
+YoY Revenue Growth =
+VAR PrevYear = CALCULATE([Total Revenue], SAMEPERIODLASTYEAR('Date'[Date]))
+RETURN DIVIDE([Total Revenue] - PrevYear, PrevYear)
+
+-- Cart_to_Purchase_Dropoff (Power BI Funnel)
+Cart_to_Purchase_Dropoff = [Total_Cart_Users] - [Total_Purchase_Users]
+
+-- Conversion Rate (Visit to Cart)
+Visit_to_Cart = DIVIDE([Total_Cart_Users],[Total_Visitors])
+
+-- Example: Monthly Revenue (Time Intelligence)
+Monthly Revenue =
+CALCULATE([Total Revenue], DATESINPERIOD('Date'[Date], MAX('Date'[Date]), -1, MONTH))
+
+-- Example: VIP Customer Flag (Customer 360)
+VIP Customer = IF([Lifetime Value] > 100000, "Yes", "No")
+
+-- Example: Rolling 12 Month Revenue
+Rolling 12M Revenue = CALCULATE([Total Revenue], DATESINPERIOD('Date'[Date], LASTDATE('Date'[Date]), -12, MONTH))
+
+
+=== PYTHON SNIPPETS (from Python projects) ===
+# Retail RFM (KMeans) snippet
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+
+# snapshot_date = df['InvoiceDate'].max() + pd.Timedelta(days=1)
+# rfm aggregation
+# rfm = df.groupby('CustomerID').agg({
+#     'InvoiceDate': lambda x: (snapshot_date - x.max()).days,
+#     'InvoiceNo': 'count',
+#     'Amount': 'sum'
+# }).reset_index()
+
+# Standardize and cluster
+# scaler = StandardScaler()
+# rfm_scaled = scaler.fit_transform(rfm[['Recency','Frequency','Monetary']])
+# kmeans = KMeans(n_clusters=4, random_state=42).fit(rfm_scaled)
+
+
+# Airbnb EDA snippet
+import pandas as pd
+# df = pd.read_csv('AB_NYC_2019.csv')
+# df['last_review'] = pd.to_datetime(df['last_review'], errors='coerce')
+# df_clean = df[(df['price'] > 0) & (df['price'] < df['price'].quantile(0.99))]
+
+
+# ARIMA forecasting snippet
+from statsmodels.tsa.arima.model import ARIMA
+# monthly_sales_agg = combined_df.groupby(['Year','Month'])['Sales'].sum().reset_index()
+# monthly_sales_agg['YearMonth'] = pd.to_datetime(monthly_sales_agg['Year'].astype(str) + '-' + monthly_sales_agg['Month'].astype(str))
+# ts = monthly_sales_agg.set_index('YearMonth')['Sales'].asfreq('MS')
+# arima_model = ARIMA(ts, order=(1,1,1))
+# arima_fit = arima_model.fit()
+# forecast = arima_fit.forecast(steps=12)
+
+
+=== EXCEL FORMULAS & TEMPLATES (examples provided in Excel projects) ===
+-- VLOOKUP usage (Excel):
+=VLOOKUP($A2, Customers!$A:$F, 3, FALSE)
+
+-- INDEX-MATCH (safer lookup):
+=INDEX(Customers!$C:$C, MATCH($A2, Customers!$A:$A, 0))
+
+-- SUMIFS example:
+=SUMIFS(Sales[Amount], Sales[Region], "West", Sales[Year], 2024)
+
+-- AVERAGEIFS example:
+=AVERAGEIFS(Sales[Amount], Sales[Product], "Mac Book Pro")
+
+-- OFFSET+MATCH dynamic range (example):
+=SUM(OFFSET(Sales!$B$2,0,0,MATCH("zzzz",Sales!$B:$B)-1,1))
+
+-- Conditional formatting rule example: formula-based
+=AND($D2>0.8*$E2, $D2<>"")
+
+
+=== NOTES ON ACCURACY AND SOURCES ===
+- The user supplied explicit READMEs and code snippets earlier in the conversation and links to GitHub repos for each project. This ROBIN_CONTEXT is built from the user's supplied materials and the assistant should avoid hallucinating details beyond what is provided.
+- If asked to fetch additional code from the repositories, the assistant should indicate it can fetch if given permission to browse and will then retrieve exact files.
+
 """
+
+# End of robi_context.py
