@@ -364,6 +364,9 @@ for m in st.session_state.history:
 # -----------------------
 # User input
 # -----------------------
+
+tts_toggle = st.checkbox("🔊 Play responses (TTS)", value=False)
+
 # --- Chat input with Send and Erase buttons ---
 col1, col2 = st.columns([8, 1.2])
 
