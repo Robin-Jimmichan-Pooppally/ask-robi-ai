@@ -364,20 +364,26 @@ for m in st.session_state.history:
 # -----------------------
 # User input
 # -----------------------
-user_input = st.text_input("Ask about this project or anything portfolio-related...", key="user_input")
-tts_toggle = st.checkbox("🔊 Play responses (TTS)", value=False)
+# --- Chat input with Send and Erase buttons ---
+col1, col2 = st.columns([8, 1.2])
 
-# Helper: prepare system prompt based on mode
-def build_system_prompt(mode, selected_project_url):
-    base = context.get("persona", "")
-    base += "\n\nYou must only use factual information from Robin's portfolio context and from the project's README (if provided). Do NOT hallucinate."
-    if mode == "Business Analytics Assistant":
-        base += "\nRespond as a Business Analyst: focus on KPIs, metrics, methodology, dataset assumptions, and business impact. Keep answers concise and technical when requested."
-    else:
-        base += "\nRespond as a friendly portfolio guide: explain projects in simple terms and offer follow-up suggestions for recruiters and viewers."
-    if selected_project_url:
-        base += f"\nCurrent project repo: {selected_project_url}"
-    return base
+with col1:
+    user_input = st.text_input("Type your message...", key="chat_input", placeholder="Ask me anything...")
+
+with col2:
+    send = st.button("🚀")
+    erase = st.button("🧹")
+
+# Handle button actions
+if send and user_input.strip():
+    st.session_state.messages.append({"role": "user", "content": user_input})
+    st.session_state.chat_history.append({"role": "user", "content": user_input})
+    st.session_state.chat_input = ""  # Clear input after sending
+
+if erase:
+    st.session_state.messages = []
+    st.session_state.chat_history = []
+    st.rerun()
 
 # -----------------------
 # Send question -> Groq
