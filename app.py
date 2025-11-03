@@ -89,7 +89,7 @@ if not st.session_state.greeted:
         font-family: "Inter", sans-serif;
         margin-bottom: 20px;
     '>
-        <h4 style='color:#00bfff;'>👋 Hey Robin!</h4>
+        <h4 style='color:#00bfff;'>👋 Hey!</h4>
         <p style='color:white;'>
         I'm <b style='color:#00bfff;'>Portfoli-AI 🤖</b>, your portfolio assistant.<br><br>
         Ask me about your <b>projects</b>, <b>skills</b>, or <b>business analytics insights</b>.<br>
