@@ -323,7 +323,7 @@ with st.sidebar:
         icon = "📊" if "Excel" in k or "Power" in k else ("🐍" if "Python" in k else "🗄️")
         st.markdown(f"<div class='sidebar-item'>{icon} <strong>{k}</strong> <span class='count'>{v}</span></div>", unsafe_allow_html=True)
     
-    # Total projects
+    # Calculate and display total projects
     total_projects = sum(summary.values()) if summary else 0
     st.markdown("<hr style='border-color: rgba(255,255,255,0.03)'>", unsafe_allow_html=True)
     st.markdown(f"<div style='font-weight:700; color:var(--text);'>Total Projects: <span style='color:var(--accent);'>{total_projects}</span></div>", unsafe_allow_html=True)
