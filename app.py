@@ -424,7 +424,9 @@ with col2:
 if send and user_input.strip():
     st.session_state.messages.append({"role": "user", "content": user_input})
     st.session_state.chat_history.append({"role": "user", "content": user_input})
-    st.session_state.chat_input = ""  # Clear input after sending
+    st.session_state["chat_input"] = ""
+    st.experimental_rerun()
+
 
 if erase:
     st.session_state.messages = []
