@@ -14,7 +14,9 @@ from io import BytesIO
 import requests
 import json
 import os
+import tempfile
 import textwrap
+import time
 from urllib.parse import urlparse
 
 # Import your verified context (must match what we finalized)
@@ -425,13 +427,37 @@ def fetch_readme_lines(repo_url, max_lines=20):
 
 def speak_text(text):
     try:
-        tts = gTTS(text=text, lang="en", slow=False)
-        buf = BytesIO()
-        tts.write_to_fp(buf)
-        buf.seek(0)
-        st.audio(buf.read(), format="audio/mp3")
+        # Limit text length to prevent very long audio generation
+        if len(text) > 500:
+            text = text[:500] + "... [text truncated for TTS]"
+            
+        # Generate speech
+        tts = gTTS(text=text, lang='en', slow=False, tld='com')
+        
+        # Use a temporary file to store the audio
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as fp:
+            temp_filename = fp.name
+            
+        # Save the audio to the temporary file
+        tts.save(temp_filename)
+        
+        # Play the audio
+        audio_file = open(temp_filename, 'rb')
+        audio_bytes = audio_file.read()
+        
+        # Display audio player
+        st.audio(audio_bytes, format='audio/mp3')
+        
+        # Clean up the temporary file
+        audio_file.close()
+        try:
+            os.unlink(temp_filename)
+        except:
+            pass
+            
     except Exception as e:
-        st.warning(f"TTS unavailable: {str(e)}")
+        st.warning(f"⚠️ TTS Error: {str(e)}")
+        st.warning("Note: Some network environments may block TTS. Try checking your internet connection or disabling any VPN.")
 
 def save_chat_local(history):
     try:
