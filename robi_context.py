@@ -1,217 +1,242 @@
 # robi_context.py
 """
-Expanded ROBIN_CONTEXT and PROJECTS_INDEX
+ROBI.AI Context and Project Index
 Contains:
-- ROBIN_CONTEXT: system message with detailed project summaries and key code snippets
-- PROJECTS_INDEX: list of all 21 projects with repo links and short summaries (used by the UI)
+- ROBIN_CONTEXT: system prompt with Robin's skills, achievements, and guidance
+- PROJECTS_INDEX: list of project dicts (id, name, repo, category, short, readme_url)
 """
 
-ROBIN_CONTEXT = r"""
-You are Robin Jimmichan P, an aspiring Business Analyst with expertise in SQL, Excel, Power BI, and Python.
+# System context for the LLM (business-friendly, metrics-first)
+ROBIN_CONTEXT = '''
+You are Robin Jimmichan P, an experienced Business Analyst focused on SQL, Excel, Power BI, and Python.
+Location: Bengaluru, India (Originally from Kerala)
+Core skills: SQL, Excel, Power BI, Python, Data Visualization, BI, Time-series forecasting, RFM segmentation, Data modeling.
 
-Contact:
-- Email: rjimmichan@gmail.com
-- LinkedIn: https://www.linkedin.com/in/robin-jimmichan-pooppally-676061291
-- GitHub: https://github.com/Robin-Jimmichan-Pooppally
+KEY ACHIEVEMENTS:
+- 92% forecasting accuracy (ARIMA MAPE ~7.8%)
+- 15-20% cost reduction via inventory optimization
+- 60% revenue concentration in VIP segment via RFM (15% customers = 60% revenue)
+- 28% high-risk patient identification using comorbidity analysis
+- 8-12% hospital stay reduction identified via operational analytics
+- 63% e-commerce funnel conversion; 35% cart abandonment opportunity identified
+- 10-15% loan default reduction from risk segmentation
 
-Professional focus:
-- End-to-end analytics projects across Excel (6), Power BI (5), SQL (6), Python (4)
-- Emphasis on business impact, reproducible code, and production-ready dashboards
+How to respond:
+- Be enthusiastic and business-focused.
+- Always reference measurable outcomes (use numbers above).
+- When asked for exact code or README, fetch from the repository link provided in PROJECTS_INDEX.
+- If exact code is not available locally, explain you will fetch from GitHub raw URL and display exact content.
+- For SQL/DAX/Excel formulas: if exact snippet exists in repo README or files, display it verbatim; otherwise provide a clearly labeled template/example and instruct where to place it.
+'''
 
-GUIDELINES:
-- When answering, be enthusiastic & confident.
-- Provide business-focused explanations and exact code snippets when the user asks.
-- Use the project-specific code and measures included below where relevant.
-- NEVER hallucinate repository contents — rely on provided READMEs / code snippets.
+# PROJECTS_INDEX: 21 projects with links and raw README URLs
+# Raw README URL format assumes 'main' branch. Change branch if needed.
+OWNER = "Robin-Jimmichan-Pooppally"
 
---- KEY ACHIEVEMENTS (short) ---
-- 92% forecasting accuracy (ARIMA MAPE 7.8%)
-- 17% excess stock reduction (inventory optimization)
-- VIP segment = 15% customers generating 60% revenue (RFM/KMeans)
-- 10-15% default reduction from loan-risk segmentation
-- 28% high-risk patient identification in healthcare analytics
-"""
-
-# -------------------------
-# PROJECTS_INDEX for UI
-# -------------------------
 PROJECTS_INDEX = [
     # Excel (6)
-    {"id":"excel_1","name":"Telco Customer Churn Analysis (Excel)","category":"Excel",
-     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Telco-Customer-Churn-Analysis-Excel-Project",
-     "short":"Pivot-based churn analysis, correlation and tenure-based insights."},
-    {"id":"excel_2","name":"Sales Performance Analysis (Excel)","category":"Excel",
-     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Sales-Performance-Analysis-Excel-Project",
-     "short":"Sales vs. Target dashboards, regional analysis and KPI tracking."},
-    {"id":"excel_3","name":"Marketing Campaign Analysis (Excel)","category":"Excel",
-     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Marketing-Campaign-Analysis-Excel-Project",
-     "short":"Campaign-level ROI, channel CPL optimization and budget allocation."},
-    {"id":"excel_4","name":"HR Analytics (Excel)","category":"Excel",
-     "repo":"https://github.com/Robin-Jimmichan-Pooppally/HR-Analytics-Excel-Project",
-     "short":"Attrition analysis, department insights and workforce KPIs."},
-    {"id":"excel_5","name":"E-commerce Sales Analysis (Excel)","category":"Excel",
-     "repo":"https://github.com/Robin-Jimmichan-Pooppally/E-commerce-Sales-Analysis-Excel-Project",
-     "short":"Transaction consolidation, revenue pivot dashboards."},
-    {"id":"excel_6","name":"Bank Customer Analysis (Excel)","category":"Excel",
-     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Bank-Customer-Analysis-Excel-Project",
-     "short":"Banking customer segmentation & balance analysis."},
+    {
+        "id": "excel_1",
+        "name": "Telco Customer Churn Analysis (Excel)",
+        "repo": f"https://github.com/{OWNER}/Telco-Customer-Churn-Analysis-Excel-Project",
+        "category": "Excel",
+        "short": "Telco churn analysis using Excel pivot tables, correlations, and visual dashboards.",
+        "readme_url": f"https://raw.githubusercontent.com/{OWNER}/Telco-Customer-Churn-Analysis-Excel-Project/main/README.md",
+        "updated": "2025"
+    },
+    {
+        "id": "excel_2",
+        "name": "Sales Performance Analysis (Excel)",
+        "repo": f"https://github.com/{OWNER}/Sales-Performance-Analysis-Excel-Project",
+        "category": "Excel",
+        "short": "Sales performance dashboards, target vs actual, KPI tracking.",
+        "readme_url": f"https://raw.githubusercontent.com/{OWNER}/Sales-Performance-Analysis-Excel-Project/main/README.md",
+        "updated": "2025"
+    },
+    {
+        "id": "excel_3",
+        "name": "Marketing Campaign Analysis (Excel)",
+        "repo": f"https://github.com/{OWNER}/Marketing-Campaign-Analysis-Excel-Project",
+        "category": "Excel",
+        "short": "Campaign ROI, cost-per-lead analysis, channel optimization.",
+        "readme_url": f"https://raw.githubusercontent.com/{OWNER}/Marketing-Campaign-Analysis-Excel-Project/main/README.md",
+        "updated": "2025"
+    },
+    {
+        "id": "excel_4",
+        "name": "HR Analytics Dashboard (Excel)",
+        "repo": f"https://github.com/{OWNER}/HR-Analytics-Excel-Project",
+        "category": "Excel",
+        "short": "Attrition analysis and employee metrics using Excel.",
+        "readme_url": f"https://raw.githubusercontent.com/{OWNER}/HR-Analytics-Excel-Project/main/README.md",
+        "updated": "2025"
+    },
+    {
+        "id": "excel_5",
+        "name": "E-commerce Sales Analysis (Excel)",
+        "repo": f"https://github.com/{OWNER}/E-commerce-Sales-Analysis-Excel-Project",
+        "category": "Excel",
+        "short": "Multi-CSV consolidation and revenue dashboards via Power Query.",
+        "readme_url": f"https://raw.githubusercontent.com/{OWNER}/E-commerce-Sales-Analysis-Excel-Project/main/README.md",
+        "updated": "2025"
+    },
+    {
+        "id": "excel_6",
+        "name": "Bank Customer Analysis (Excel)",
+        "repo": f"https://github.com/{OWNER}/Bank-Customer-Analysis-Excel-Project",
+        "category": "Excel",
+        "short": "RFM segmentation and high-value customer identification in Excel.",
+        "readme_url": f"https://raw.githubusercontent.com/{OWNER}/Bank-Customer-Analysis-Excel-Project/main/README.md",
+        "updated": "2025"
+    },
 
     # Power BI (5)
-    {"id":"pbi_1","name":"E-commerce Funnel Analysis (Power BI)","category":"Power BI",
-     "repo":"https://github.com/Robin-Jimmichan-Pooppally/E-commerce-Funnel-Analysis-PowerBI-Project",
-     "short":"Visit -> Cart -> Purchase funnel, conversion metrics and cohort insights."},
-    {"id":"pbi_2","name":"Customer 360 Dashboard (Power BI)","category":"Power BI",
-     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Customer-360-Dashboard-PowerBI-Project",
-     "short":"Unified view of customers with tickets and purchases for retention analysis."},
-    {"id":"pbi_3","name":"Retail Sales Dashboard (Power BI)","category":"Power BI",
-     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Retail-Sales-Dashboard-PowerBI-Project",
-     "short":"Star schema model with regional maps, KPIs and time intelligence."},
-    {"id":"pbi_4","name":"Telco Customer Churn Dashboard (Power BI)","category":"Power BI",
-     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Telco-Customer-Churn-Dashboard-PowerBI-Project",
-     "short":"Churn by contract & payment method, DAX measures for retention."},
-    {"id":"pbi_5","name":"Financial Performance Dashboard (Power BI)","category":"Power BI",
-     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Financial-Performance-Dashboard-PowerBI-Project",
-     "short":"P&L tracking, YoY growth, investments and profit margin DAX measures."},
+    {
+        "id": "pbi_1",
+        "name": "E-commerce Funnel Analysis (Power BI)",
+        "repo": f"https://github.com/{OWNER}/E-commerce-Funnel-Analysis-PowerBI-Project",
+        "category": "Power BI",
+        "short": "Visit → Cart → Purchase funnel analysis with DAX measures and cohorts.",
+        "readme_url": f"https://raw.githubusercontent.com/{OWNER}/E-commerce-Funnel-Analysis-PowerBI-Project/main/README.md",
+        "updated": "2025"
+    },
+    {
+        "id": "pbi_2",
+        "name": "Customer 360 Dashboard (Power BI)",
+        "repo": f"https://github.com/{OWNER}/Customer-360-Dashboard-PowerBI-Project",
+        "category": "Power BI",
+        "short": "Unified customer view linking tickets, purchases, and support metrics.",
+        "readme_url": f"https://raw.githubusercontent.com/{OWNER}/Customer-360-Dashboard-PowerBI-Project/main/README.md",
+        "updated": "2025"
+    },
+    {
+        "id": "pbi_3",
+        "name": "Retail Sales Dashboard (Power BI)",
+        "repo": f"https://github.com/{OWNER}/Retail-Sales-Dashboard-PowerBI-Project",
+        "category": "Power BI",
+        "short": "Star schema, KPI cards, time intelligence and regional maps.",
+        "readme_url": f"https://raw.githubusercontent.com/{OWNER}/Retail-Sales-Dashboard-PowerBI-Project/main/README.md",
+        "updated": "2025"
+    },
+    {
+        "id": "pbi_4",
+        "name": "Telco Customer Churn Dashboard (Power BI)",
+        "repo": f"https://github.com/{OWNER}/Telco-Customer-Churn-Dashboard-PowerBI-Project",
+        "category": "Power BI",
+        "short": "Churn by contract type, payment method and tenure with DAX measures.",
+        "readme_url": f"https://raw.githubusercontent.com/{OWNER}/Telco-Customer-Churn-Dashboard-PowerBI-Project/main/README.md",
+        "updated": "2025"
+    },
+    {
+        "id": "pbi_5",
+        "name": "Financial Performance Dashboard (Power BI)",
+        "repo": f"https://github.com/{OWNER}/Financial-Performance-Dashboard-PowerBI-Project",
+        "category": "Power BI",
+        "short": "P&L tracking, YoY, waterfall and time-intelligence measures.",
+        "readme_url": f"https://raw.githubusercontent.com/{OWNER}/Financial-Performance-Dashboard-PowerBI-Project/main/README.md",
+        "updated": "2025"
+    },
 
     # Python (4)
-    {"id":"py_1","name":"Retail Customer Segmentation (Python)","category":"Python",
-     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Retail-Customer-Segmentation-Python-Project",
-     "short":"RFM + KMeans clustering with Apriori cross-sell analysis."},
-    {"id":"py_2","name":"Healthcare Patient Analytics (Python)","category":"Python",
-     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Healthcare-Patient-Analytics-Python-Project",
-     "short":"Comorbidity analysis & LOS insights with feature engineering."},
-    {"id":"py_3","name":"Airbnb NYC Price Analysis (Python)","category":"Python",
-     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Airbnb-NYC-Price-Analysis-Python-Project",
-     "short":"Price EDA and prediction model for NYC listings."},
-    {"id":"py_4","name":"Sales Forecasting - Time Series (Python)","category":"Python",
-     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Sales-Forecasting-Time-Series-Python-Project",
-     "short":"ARIMA forecasting with MAPE 7.8% and seasonality insights."},
+    {
+        "id": "py_1",
+        "name": "Retail Customer Segmentation (Python)",
+        "repo": f"https://github.com/{OWNER}/Retail-Customer-Segmentation-Python-Project",
+        "category": "Python",
+        "short": "RFM analysis + KMeans clustering to identify VIP segments.",
+        "readme_url": f"https://raw.githubusercontent.com/{OWNER}/Retail-Customer-Segmentation-Python-Project/main/README.md",
+        "updated": "2025"
+    },
+    {
+        "id": "py_2",
+        "name": "Healthcare Patient Analytics (Python)",
+        "repo": f"https://github.com/{OWNER}/Healthcare-Patient-Analytics-Python-Project",
+        "category": "Python",
+        "short": "Comorbidity and LOS analysis, risk stratification and visualization.",
+        "readme_url": f"https://raw.githubusercontent.com/{OWNER}/Healthcare-Patient-Analytics-Python-Project/main/README.md",
+        "updated": "2025"
+    },
+    {
+        "id": "py_3",
+        "name": "Airbnb NYC Price Analysis (Python)",
+        "repo": f"https://github.com/{OWNER}/Airbnb-NYC-Price-Analysis-Python-Project",
+        "category": "Python",
+        "short": "EDA and regression price model across NYC neighborhoods (2019).",
+        "readme_url": f"https://raw.githubusercontent.com/{OWNER}/Airbnb-NYC-Price-Analysis-Python-Project/main/README.md",
+        "updated": "2025"
+    },
+    {
+        "id": "py_4",
+        "name": "Sales Forecasting - Time Series (Python)",
+        "repo": f"https://github.com/{OWNER}/Sales-Forecasting-Time-Series-Python-Project",
+        "category": "Python",
+        "short": "ARIMA forecasting for monthly retail sales with model diagnostics.",
+        "readme_url": f"https://raw.githubusercontent.com/{OWNER}/Sales-Forecasting-Time-Series-Python-Project/main/README.md",
+        "updated": "2025"
+    },
 
     # SQL (6)
-    {"id":"sql_1","name":"Healthcare Claims Analysis (SQL)","category":"SQL",
-     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Healthcare-Claims-Analysis-SQL-Project",
-     "short":"Fraud detection, provider performance and high-cost patient analysis."},
-    {"id":"sql_2","name":"Bank Customer Segmentation (SQL)","category":"SQL",
-     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Bank-Customer-Segmentation-SQL-Project",
-     "short":"RFM & segment analysis with CASE and percentile-based grouping."},
-    {"id":"sql_3","name":"Telco Churn Analysis (SQL)","category":"SQL",
-     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Telco-Churn-Analysis-SQL-Project",
-     "short":"Churn segmentation queries, tenure windows, payment method analysis."},
-    {"id":"sql_4","name":"Inventory & Supplier Analysis (SQL)","category":"SQL",
-     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Inventory-Supplier-Analysis-SQL-Project",
-     "short":"Turnover ratios, reorder alerts and supplier concentration metrics."},
-    {"id":"sql_5","name":"Hospital Patient Analysis (SQL)","category":"SQL",
-     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Hospital-Patient-Analysis-SQL-Project",
-     "short":"Admissions, LOS, outcomes and physician performance queries."},
-    {"id":"sql_6","name":"Loan Default Prediction (SQL)","category":"SQL",
-     "repo":"https://github.com/Robin-Jimmichan-Pooppally/Loan-Default-Prediction-SQL-Project",
-     "short":"Risk segmentation, high-risk borrower flagging and portfolio analysis."},
+    {
+        "id": "sql_1",
+        "name": "Healthcare Claims Analysis (SQL)",
+        "repo": f"https://github.com/{OWNER}/Healthcare-Claims-Analysis-SQL-Project",
+        "category": "SQL",
+        "short": "Claims fraud detection, provider analysis, and high-cost patient identification.",
+        "readme_url": f"https://raw.githubusercontent.com/{OWNER}/Healthcare-Claims-Analysis-SQL-Project/main/README.md",
+        "updated": "2025"
+    },
+    {
+        "id": "sql_2",
+        "name": "Bank Customer Segmentation (SQL)",
+        "repo": f"https://github.com/{OWNER}/Bank-Customer-Segmentation-SQL-Project",
+        "category": "SQL",
+        "short": "RFM segmentation in SQL for banking customers and regional insights.",
+        "readme_url": f"https://raw.githubusercontent.com/{OWNER}/Bank-Customer-Segmentation-SQL-Project/main/README.md",
+        "updated": "2025"
+    },
+    {
+        "id": "sql_3",
+        "name": "Telco Churn Analysis (SQL)",
+        "repo": f"https://github.com/{OWNER}/Telco-Churn-Analysis-SQL-Project",
+        "category": "SQL",
+        "short": "7,032 customers churn analysis, tenure and payment method impact.",
+        "readme_url": f"https://raw.githubusercontent.com/{OWNER}/Telco-Churn-Analysis-SQL-Project/main/README.md",
+        "updated": "2025"
+    },
+    {
+        "id": "sql_4",
+        "name": "Inventory & Supplier Analysis (SQL)",
+        "repo": f"https://github.com/{OWNER}/Inventory-Supplier-Analysis-SQL-Project",
+        "category": "SQL",
+        "short": "Inventory turn, reorder priority, and supplier dependency analysis.",
+        "readme_url": f"https://raw.githubusercontent.com/{OWNER}/Inventory-Supplier-Analysis-SQL-Project/main/README.md",
+        "updated": "2025"
+    },
+    {
+        "id": "sql_5",
+        "name": "Hospital Patient Analysis (SQL)",
+        "repo": f"https://github.com/{OWNER}/Hospital-Patient-Analysis-SQL-Project",
+        "category": "SQL",
+        "short": "Patient admissions, length-of-stay, outcomes and physician performance.",
+        "readme_url": f"https://raw.githubusercontent.com/{OWNER}/Hospital-Patient-Analysis-SQL-Project/main/README.md",
+        "updated": "2025"
+    },
+    {
+        "id": "sql_6",
+        "name": "Loan Default Prediction (SQL)",
+        "repo": f"https://github.com/{OWNER}/Loan-Default-Prediction-SQL-Project",
+        "category": "SQL",
+        "short": "Loan risk segmentation and portfolio level analysis.",
+        "readme_url": f"https://raw.githubusercontent.com/{OWNER}/Loan-Default-Prediction-SQL-Project/main/README.md",
+        "updated": "2025"
+    },
 ]
 
-# -------------------------
-# Key code snippets and measures (pulled from your provided READMEs / earlier conversation)
-# -------------------------
-
-# --- Financial Performance (Power BI) example DAX measures ---
-FINANCIAL_DAX = r"""
--- Total Revenue
-Total Revenue = 
-CALCULATE(
-    SUM('Financial_Performance_Synthetic'[Amount]), 
-    'Financial_Performance_Synthetic'[Category] = "Revenue"
-)
-
--- Total Expenses
-Total Expenses = 
-CALCULATE(
-    SUM('Financial_Performance_Synthetic'[Amount]), 
-    'Financial_Performance_Synthetic'[Category] = "Expense"
-)
-
--- Total Investments
-Total Investments = 
-CALCULATE(
-    SUM('Financial_Performance_Synthetic'[Amount]), 
-    'Financial_Performance_Synthetic'[Category] = "Investment"
-)
-
--- Net Profit
-Net Profit = [Total Revenue] + [Total Expenses]
-
--- YoY Revenue Growth %
-YoY Revenue Growth % = 
-VAR CurrentYearRevenue = 
-    CALCULATE(
-        [Total Revenue], 
-        'Financial_Performance_Synthetic'[Year] = YEAR(TODAY())
-    )
-VAR PreviousYearRevenue = 
-    CALCULATE(
-        [Total Revenue], 
-        'Financial_Performance_Synthetic'[Year] = YEAR(TODAY()) - 1
-    )
-RETURN 
-    DIVIDE(
-        CurrentYearRevenue - PreviousYearRevenue, 
-        PreviousYearRevenue, 
-        0
-    ) * 100
-"""
-
-# --- Telco Churn (SQL) core queries (from your provided SQL snippets) ---
-TELCO_SQL_SNIPPETS = r"""
--- Overall Churn Distribution
-SELECT Churn, COUNT(*) AS count 
-FROM telco_churn 
-GROUP BY Churn;
-
--- Churn by Contract Type
-SELECT 
-    Contract,
-    COUNT(*) AS total_customers,
-    SUM(CASE WHEN Churn = 'Yes' THEN 1 ELSE 0 END) AS churned_customers,
-    ROUND(SUM(CASE WHEN Churn = 'Yes' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) AS churn_rate_percent
-FROM telco_churn
-GROUP BY Contract
-ORDER BY churn_rate_percent DESC;
-
--- High-Risk Customers (credit < 600 OR poor repayment example from Loan project)
-SELECT loan_id, borrower_name, credit_score, repayment_history, loan_amount
-FROM loans
-WHERE credit_score < 600 OR repayment_history = 'Poor'
-ORDER BY credit_score ASC;
-"""
-
-# --- ARIMA forecasting summary (Python approach) ---
-ARIMA_NOTES = r"""
-# Key ARIMA steps used in Sales Forecasting project:
-1. Merge monthly CSVs into single DataFrame.
-2. Convert 'Order Date' to datetime; aggregate sales by month.
-3. Test stationarity using augmented Dicky-Fuller (ADF).
-4. Use differencing (d=1) to achieve stationarity for ARIMA(1,1,1).
-5. Fit ARIMA and evaluate MAPE, RMSE, MAE.
-6. Forecast and plot with 95% confidence intervals.
-
-# Example ARIMA code snippet (statsmodels)
-from statsmodels.tsa.arima.model import ARIMA
-arima_model = ARIMA(train_series, order=(1,1,1))
-arima_fit = arima_model.fit()
-forecast = arima_fit.forecast(steps=12)
-"""
-
-# --- RFM & KMeans (Python) outline (Retail Segmentation) ---
-RFM_KMEANS = r"""
-# Steps:
-1. Compute snapshot_date = last_txn_date + 1 day
-2. Compute per customer: Recency (days), Frequency (count), Monetary (sum)
-3. StandardScaler -> KMeans (k=4) (use elbow method)
-4. Map clusters to business labels: VIP / Medium / Recent / Churned
-"""
-
-# Aggregate context object (string) used as system message
-ROB_CONTEXT_FULL = ROBIN_CONTEXT + "\n\n" + "KEY_SNIPPETS:\n" + FINANCIAL_DAX + "\n" + TELCO_SQL_SNIPPETS + "\n" + ARIMA_NOTES + "\n" + RFM_KMEANS
-
-# Make available for import
-ROBIN_CONTEXT = ROB_CONTEXT_FULL
-
-# End of robi_context.py
+# Optional: helper for external tools (not used directly)
+def get_project_by_name(name: str):
+    """Return the project dict matching name (case-insensitive) or None."""
+    name_lower = name.strip().lower()
+    for p in PROJECTS_INDEX:
+        if p["name"].strip().lower() == name_lower:
+            return p
+    return None
