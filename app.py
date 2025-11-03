@@ -22,6 +22,17 @@ from robi_context import context
 # Page config
 # -----------------------
 st.set_page_config(page_title="Portfoli-AI", page_icon="🤖", layout="wide")
+# -----------------------
+# Initialize session state
+# -----------------------
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+
+if "history" not in st.session_state:
+    st.session_state.history = []
 
 # --- Sticky Header ---
 st.markdown("""
