@@ -12,6 +12,8 @@ from groq import Groq
 from gtts import gTTS
 import tempfile
 import os
+import base64
+from io import BytesIO
 from io import BytesIO
 import requests
 import json
@@ -431,47 +433,45 @@ def fetch_readme_lines(repo_url, max_lines=20):
 def speak_text(text):
     try:
         # Limit text length to prevent very long audio generation
-        if len(text) > 300:
-            text = text[:300] + "... [truncated]"
+        if len(text) > 200:
+            text = text[:200] + "... [truncated]"
         
         # Create a status message
-        with st.spinner("🔊 Generating speech..."):
-            # Generate speech using gTTS with error handling for network issues
-            try:
-                tts = gTTS(text=text, lang='en', tld='com', slow=False)
-                
-                # Create a temporary file
-                with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as fp:
-                    temp_filename = fp.name
-                
-                # Save the audio to the temporary file
-                tts.save(temp_filename)
-                
-                # Read the audio file
-                audio_bytes = open(temp_filename, 'rb').read()
-                
-                # Display the audio player
-                st.audio(audio_bytes, format='audio/mp3')
-                
-                # Show success message
-                st.success("🔊 Audio ready! Click the play button above to listen.")
-                
-                return True
-                
-            except Exception as e:
-                st.error(f"Failed to generate speech: {str(e)}")
-                return False
-            
-            finally:
-                # Clean up the temporary file
-                try:
-                    if 'temp_filename' in locals() and os.path.exists(temp_filename):
-                        os.unlink(temp_filename)
-                except Exception as e:
-                    st.warning(f"Warning: Could not clean up temporary file: {str(e)}")
-    
+        status = st.empty()
+        status.info("🔊 Preparing audio...")
+        
+        # Generate speech using gTTS
+        tts = gTTS(text=text, lang='en', slow=False)
+        
+        # Use BytesIO to handle audio in memory
+        audio_buffer = BytesIO()
+        tts.write_to_fp(audio_buffer)
+        audio_buffer.seek(0)
+        
+        # Create a data URI for the audio
+        audio_b64 = base64.b64encode(audio_buffer.read()).decode('utf-8')
+        audio_html = f'''
+        <audio controls autoplay>
+            <source src="data:audio/mp3;base64,{audio_b64}" type="audio/mp3">
+            Your browser does not support the audio element.
+        </audio>
+        '''
+        
+        # Display the audio player
+        st.components.v1.html(audio_html, height=50)
+        
+        # Show success message
+        status.success("🔊 Audio ready!")
+        return True
+        
     except Exception as e:
-        st.error(f"An unexpected error occurred: {str(e)}")
+        st.error(f"Failed to generate speech: {str(e)}")
+        st.warning("""
+        If you're running this on Streamlit Cloud, please note that:
+        1. Audio playback might be blocked by the browser
+        2. Try clicking the refresh button in the audio player
+        3. Make sure your browser allows autoplay
+        """)
         return False
 
 def save_chat_local(history):
