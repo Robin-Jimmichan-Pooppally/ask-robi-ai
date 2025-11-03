@@ -18,6 +18,33 @@ from urllib.parse import urlparse
 # Import your verified context (must match what we finalized)
 from robi_context import context
 
+# --- ADD THIS RIGHT AFTER "from robi_context import context" ---
+
+def build_system_prompt(chat_mode: str, selected_project: str | None) -> str:
+    """
+    Builds the system prompt for Groq chat completions.
+    Uses the global context plus the active chat mode and selected project.
+    """
+    base = (
+        f"You are {context.get('assistant_name', 'Portfoli-AI')}, "
+        f"an intelligent assistant that helps explain and analyze "
+        f"{context.get('owner_name', 'the user')}'s Business Analyst portfolio."
+    )
+
+    if chat_mode == "Business Analytics Assistant":
+        base += (
+            " Focus on technical reasoning, data interpretation, and actionable insights "
+            "using Excel, SQL, Power BI, and Python. Respond precisely and clearly."
+        )
+    else:
+        base += " Provide friendly, concise explanations about the portfolio."
+
+    if selected_project:
+        base += f" The user is currently viewing the project at: {selected_project}."
+
+    return base.strip()
+
+
 # -----------------------
 # Page config
 # -----------------------
