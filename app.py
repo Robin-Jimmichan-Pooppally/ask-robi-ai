@@ -1,5 +1,7 @@
 """
 Portfoli-AI — Streamlit app (Groq + neon frosted UI + GitHub README preview + gTTS)
+Place robi_context.py (your finalized context) in the same folder.
+Add your Groq API key to Streamlit secrets: GROQ_API_KEY = "gsk_..."
 """
 
 import streamlit as st
@@ -7,12 +9,8 @@ from groq import Groq
 from gtts import gTTS
 from io import BytesIO
 import requests
-import json
 import os
-import textwrap
 from urllib.parse import urlparse
-
-# Import verified context
 from robi_context import context
 
 # -----------------------
@@ -21,30 +19,21 @@ from robi_context import context
 st.set_page_config(page_title="Portfoli-AI", page_icon="🤖", layout="wide")
 
 # -----------------------
-# Initialize session state
+# Session state init
 # -----------------------
-for key in ["messages", "chat_history", "history", "selected_project", "readme_full", "readme_preview", "show_more"]:
+for key in ["messages", "chat_history", "history"]:
     if key not in st.session_state:
-        st.session_state[key] = [] if "history" in key or "messages" in key or "chat" in key else None
-st.session_state.show_more = False
+        st.session_state[key] = []
 
 # -----------------------
-# Handle clear chat (from URL param)
+# Sticky Header with broom clear button
 # -----------------------
-if "clear" in st.query_params:
-    for k in ["messages", "chat_history", "history"]:
-        st.session_state[k] = []
-    st.experimental_rerun()
-
-# --- Sticky Header ---
 st.markdown("""
     <style>
         .sticky-header {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background-color: #000000;
+            top: 0; left: 0; width: 100%;
+            background-color: #000;
             z-index: 9999;
             padding: 0.6rem 0;
             border-bottom: 1px solid #00bfff33;
@@ -58,8 +47,7 @@ st.markdown("""
         }
         .clear-btn-container {
             position: absolute;
-            top: 8px;
-            right: 20px;
+            top: 8px; right: 20px;
         }
         .clear-btn {
             background-color:#1e88e5;
@@ -73,9 +61,9 @@ st.markdown("""
         .spacer { height: 65px; }
     </style>
     <div class="sticky-header">
-        <div class="header-title">🤖 Portfoli-AI — Robin Jimmichan’s Portfolio Assistant</div>
+        <div class="header-title">🤖 Portfoli-AI — Portfolio Assistant</div>
         <div class="clear-btn-container">
-            <form action="" method="get">
+            <form action="" method="post">
                 <button class="clear-btn" name="clear" type="submit">🧹 Clear Chat</button>
             </form>
         </div>
@@ -84,17 +72,34 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -----------------------
+# Clear chat functionality
+# -----------------------
+if "clear" in st.session_state:
+    st.session_state.history = []
+    st.session_state.messages = []
+    st.session_state.chat_history = []
+    st.session_state.clear = False
+if st.button("🧹 Clear Chat (Alt)", key="clear_top"):
+    st.session_state.history = []
+    st.session_state.messages = []
+    st.session_state.chat_history = []
+    st.rerun()
+
+# -----------------------
 # Greeting message
 # -----------------------
-if "greeted" not in st.session_state:
-    st.session_state.greeted = False
-
-if not st.session_state.greeted:
+if "greeted" not in st.session_state or not st.session_state.greeted:
     st.markdown("""
-    <div style='border-radius: 15px; padding: 18px; background: rgba(0, 191, 255, 0.08);
-                border: 1px solid rgba(0,191,255,0.3); box-shadow: 0 0 15px rgba(0,191,255,0.4);
-                font-family: "Inter", sans-serif; margin-bottom: 20px;'>
-        <h4 style='color:#00bfff;'>👋 Hey!</h4>
+    <div style='
+        border-radius: 15px;
+        padding: 18px;
+        background: rgba(0, 191, 255, 0.08);
+        border: 1px solid rgba(0,191,255,0.3);
+        box-shadow: 0 0 15px rgba(0,191,255,0.4);
+        font-family: "Inter", sans-serif;
+        margin-bottom: 20px;
+    '>
+        <h4 style='color:#00bfff;'>👋 Hi!</h4>
         <p style='color:white;'>
         I'm <b style='color:#00bfff;'>Portfoli-AI 🤖</b>, your portfolio assistant.<br><br>
         Ask me about your <b>projects</b>, <b>skills</b>, or <b>business analytics insights</b>.<br>
@@ -105,11 +110,11 @@ if not st.session_state.greeted:
     st.session_state.greeted = True
 
 # -----------------------
-# Neon CSS
+# CSS
 # -----------------------
 st.markdown("""
 <style>
-body { background: #000000; color: #e8f7ff; }
+body { background: #000; color: #e8f7ff; }
 h1,h2,h3 { color: #00bfff; text-shadow: 0 0 12px #00bfff; }
 .section-card {
   background: rgba(10,12,18,0.6);
@@ -140,60 +145,82 @@ button.stButton>button { border-radius: 8px; }
 """, unsafe_allow_html=True)
 
 # -----------------------
-# Sidebar + rest (unchanged)
+# Sidebar (unchanged)
 # -----------------------
-# everything below remains the same as your original
+st.sidebar.markdown("<div class='section-card'>", unsafe_allow_html=True)
+st.sidebar.markdown(f"### 👋 {context['owner_name']}")
+st.sidebar.markdown(f"**{context['owner_role']}**")
+st.sidebar.markdown("---")
+st.sidebar.markdown("📬 **Contact**")
+st.sidebar.markdown(f"- Email: <a href='mailto:rjimmichan@gmail.com'>rjimmichan@gmail.com</a>", unsafe_allow_html=True)
+st.sidebar.markdown(f"- LinkedIn: <a href='https://www.linkedin.com/in/robin-jimmichan-pooppally-676061291'>Profile</a>", unsafe_allow_html=True)
+st.sidebar.markdown(f"- GitHub: <a href='https://github.com/Robin-Jimmichan-Pooppally'>Robin-Jimmichan-Pooppally</a>", unsafe_allow_html=True)
+st.sidebar.markdown("</div>", unsafe_allow_html=True)
 
 # -----------------------
-# Fix user input handling safely
+# Chat display
+# -----------------------
+for m in st.session_state.history:
+    role = m.get("role")
+    text = m.get("content")
+    if role == "user":
+        st.markdown(f"<div class='chat-bubble-user'><b>You:</b> {text}</div>", unsafe_allow_html=True)
+    else:
+        st.markdown(f"<div class='chat-bubble-bot'><b>Portfoli-AI:</b> {text}</div>", unsafe_allow_html=True)
+
+# -----------------------
+# Chat input (Enter to send)
 # -----------------------
 tts_toggle = st.checkbox("🔊 Play responses (TTS)", value=False)
+user_input = st.text_input("Type your message...", key="chat_input", placeholder="Ask me anything and press Enter...")
 
-user_input = st.text_input("Type your message and press Enter...", key="chat_input", placeholder="Ask me anything...")
+# -----------------------
+# Groq client
+# -----------------------
+def init_groq():
+    api_key = st.secrets.get("GROQ_API_KEY", os.getenv("GROQ_API_KEY"))
+    if not api_key:
+        st.error("Missing Groq API key.")
+        st.stop()
+    return Groq(api_key=api_key)
 
-# If user pressed Enter (non-empty message)
+client = init_groq()
+
+# -----------------------
+# gTTS helper
+# -----------------------
+def speak_text(text):
+    try:
+        tts = gTTS(text=text, lang="en", slow=False)
+        buf = BytesIO()
+        tts.write_to_fp(buf)
+        buf.seek(0)
+        st.audio(buf.read(), format="audio/mp3")
+    except Exception:
+        st.warning("TTS unavailable.")
+
+# -----------------------
+# Chat response logic
+# -----------------------
 if user_input.strip():
     st.session_state.history.append({"role": "user", "content": user_input})
-    st.session_state.messages.append({"role": "user", "content": user_input})
-    st.session_state.chat_input = ""  # safely clear
-
-    # Build prompt and call Groq
-    system_prompt = f"Use Robin's verified context: {context.get('persona','')}"
-    try:
-        client = Groq(api_key=st.secrets["GROQ_API_KEY"])
-        with st.spinner("Thinking..."):
+    messages = [{"role": "system", "content": "You are Portfoli-AI, a portfolio chatbot."}]
+    for h in st.session_state.history[-6:]:
+        messages.append({"role": h["role"], "content": h["content"]})
+    with st.spinner("Thinking..."):
+        try:
             completion = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    *st.session_state.history[-8:],
-                ],
+                messages=messages,
                 temperature=0.25,
                 max_tokens=800,
             )
-            bot_text = completion.choices[0].message.content.strip()
-    except Exception as e:
-        bot_text = f"⚠️ Groq API error: {e}"
-
-    st.session_state.history.append({"role": "assistant", "content": bot_text})
+            reply = completion.choices[0].message.content.strip()
+        except Exception as e:
+            reply = f"⚠️ Groq API error: {e}"
+    st.session_state.history.append({"role": "assistant", "content": reply})
     if tts_toggle:
-        try:
-            tts = gTTS(bot_text)
-            buf = BytesIO()
-            tts.write_to_fp(buf)
-            buf.seek(0)
-            st.audio(buf.read(), format="audio/mp3")
-        except Exception:
-            st.warning("TTS failed.")
-
-# -----------------------
-# Display chat bubbles
-# -----------------------
-for m in st.session_state.history:
-    if m["role"] == "user":
-        st.markdown(f"<div class='chat-bubble-user'><b>You:</b> {m['content']}</div>", unsafe_allow_html=True)
-    else:
-        st.markdown(f"<div class='chat-bubble-bot'><b>Portfoli-AI:</b> {m['content']}</div>", unsafe_allow_html=True)
+        speak_text(reply)
 
 # -----------------------
 # Footer
