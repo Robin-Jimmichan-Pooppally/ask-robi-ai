@@ -16,7 +16,7 @@ import textwrap
 from urllib.parse import urlparse
 
 # Import your verified context (must match what we finalized)
-from robi_context import context
+from robi_context.py import context
 
 def build_system_prompt(chat_mode, selected_project=None):
     """
