@@ -87,33 +87,6 @@ def build_system_prompt(chat_mode, selected_project=None):
 # -----------------------
 st.set_page_config(page_title="Portfoli-AI", page_icon="🤖", layout="wide")
 
-# [Rest of your existing code follows...]
-# The rest of your existing code goes here exactly as you have it
-# [Previous code continues...]
-"""
-Portfoli-AI — Streamlit app (Groq + neon frosted UI + GitHub README preview + gTTS)
-Requirements: see requirements.txt provided below
-Place robi_context.py (the context you finalized) in same folder.
-Add your Groq API key to Streamlit secrets: GROQ_API_KEY = "gsk_..."
-"""
-
-import streamlit as st
-from groq import Groq
-from gtts import gTTS
-from io import BytesIO
-import requests
-import json
-import os
-import textwrap
-from urllib.parse import urlparse
-
-# Import your verified context (must match what we finalized)
-from robi_context import context
-
-# -----------------------
-# Page config
-# -----------------------
-st.set_page_config(page_title="Portfoli-AI", page_icon="🤖", layout="wide")
 # -----------------------
 # Initialize session state
 # -----------------------
@@ -165,7 +138,7 @@ st.markdown("""
         }
     </style>
     <div class="sticky-header">
-        <div class="header-title">🤖 Portfoli-AI — Robin Jimmichan’s Portfolio Assistant</div>
+        <div class="header-title">🤖 Portfoli-AI — Robin Jimmichan's Portfolio Assistant</div>
         <div class="clear-btn-container">
             <form action="" method="get">
                 <button class="clear-btn" name="clear" type="submit">🧹 Clear Chat</button>
@@ -196,7 +169,7 @@ if not st.session_state.greeted:
         <p style='color:white;'>
         I'm <b style='color:#00bfff;'>Portfoli-AI 🤖</b>, your portfolio assistant.<br><br>
         Ask me about your <b>projects</b>, <b>skills</b>, or <b>business analytics insights</b>.<br>
-        Try saying: <i>"Explain my Telco Churn Dashboard project."</i>
+        Try saying: <i>"Explain my Telco Churn Dashboard project.</i>"
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -241,12 +214,6 @@ button.stButton>button { border-radius: 8px; }
 )
 
 # -----------------------
-# (Rest of your code remains exactly the same)
-# -----------------------
-# Everything below this comment is unchanged from your provided version.
-# That includes sidebar, project list, Groq logic, chat history, TTS, footer, etc.
-
-# -----------------------
 # Sidebar: portfolio overview + links + filters
 # -----------------------
 st.sidebar.markdown("<div class='section-card'>", unsafe_allow_html=True)
@@ -258,9 +225,6 @@ st.sidebar.markdown(f"- Email: <a href='mailto:{'rjimmichan@gmail.com'}'>{'rjimm
 st.sidebar.markdown(f"- LinkedIn: <a href='{ 'https://www.linkedin.com/in/robin-jimmichan-pooppally-676061291'}'>Profile</a>", unsafe_allow_html=True)
 st.sidebar.markdown(f"- GitHub: <a href='{ 'https://github.com/Robin-Jimmichan-Pooppally'}'>Robin-Jimmichan-Pooppally</a>", unsafe_allow_html=True)
 st.sidebar.markdown("---")
-
-# ... (continue with all your existing project, chat, Groq, and TTS sections unchanged)
-
 
 # Portfolio overview counts (from context)
 summary = context.get("summary", {})
@@ -524,4 +488,3 @@ if user_input:
 # -----------------------
 st.markdown("---")
 st.markdown("<div class='small-muted'>Built with ❤️ • Portfoli-AI • Contact: rjimmichan@gmail.com</div>", unsafe_allow_html=True)
-
