@@ -10,6 +10,8 @@ Add your Groq API key to Streamlit secrets: GROQ_API_KEY = "gsk_..."
 import streamlit as st
 from groq import Groq
 from gtts import gTTS
+import tempfile
+import os
 from io import BytesIO
 import requests
 import json
@@ -429,52 +431,47 @@ def fetch_readme_lines(repo_url, max_lines=20):
 def speak_text(text):
     try:
         # Limit text length to prevent very long audio generation
-        if len(text) > 500:
-            text = text[:500] + "... [truncated]"
+        if len(text) > 300:
+            text = text[:300] + "... [truncated]"
         
-        # Create a placeholder for the audio
-        audio_placeholder = st.empty()
-        
-        # Generate speech using gTTS
-        tts = gTTS(text=text, lang='en', slow=False)
-        
-        # Save to a temporary file
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as fp:
-            temp_filename = fp.name
-        
-        # Save the audio to the temporary file
-        tts.save(temp_filename)
-        
-        # Play the audio file
-        audio_bytes = open(temp_filename, 'rb').read()
-        
-        # Display the audio player
-        audio_placeholder.audio(audio_bytes, format='audio/mp3')
-        
-        # Clean up the temporary file
-        try:
-            os.unlink(temp_filename)
-        except:
-            pass
-        
-        st.markdown("""
-        <div style='margin: 10px 0; padding: 10px; background: rgba(0, 229, 255, 0.1); border-radius: 8px;'>
-            <p style='margin: 0; color: #00E5FF;'>🔊 Click the play button above to listen</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        return True
-        
+        # Create a status message
+        with st.spinner("🔊 Generating speech..."):
+            # Generate speech using gTTS with error handling for network issues
+            try:
+                tts = gTTS(text=text, lang='en', tld='com', slow=False)
+                
+                # Create a temporary file
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as fp:
+                    temp_filename = fp.name
+                
+                # Save the audio to the temporary file
+                tts.save(temp_filename)
+                
+                # Read the audio file
+                audio_bytes = open(temp_filename, 'rb').read()
+                
+                # Display the audio player
+                st.audio(audio_bytes, format='audio/mp3')
+                
+                # Show success message
+                st.success("🔊 Audio ready! Click the play button above to listen.")
+                
+                return True
+                
+            except Exception as e:
+                st.error(f"Failed to generate speech: {str(e)}")
+                return False
+            
+            finally:
+                # Clean up the temporary file
+                try:
+                    if 'temp_filename' in locals() and os.path.exists(temp_filename):
+                        os.unlink(temp_filename)
+                except Exception as e:
+                    st.warning(f"Warning: Could not clean up temporary file: {str(e)}")
+    
     except Exception as e:
-        st.warning(f"⚠️ TTS Error: {str(e)}")
-        st.warning("""
-        Couldn't generate speech. This might be because:
-        1. No internet connection
-        2. gTTS service is temporarily unavailable
-        3. Your network is blocking the TTS service
-        
-        Please try again later or check your connection.
-        """)
+        st.error(f"An unexpected error occurred: {str(e)}")
         return False
 
 def save_chat_local(history):
@@ -638,4 +635,3 @@ if submit_button and user_input:
 # -----------------------
 st.markdown("---")
 st.markdown("<div class='small-muted'>Built with ❤️ • Portfoli-AI • Contact: rjimmichan@gmail.com</div>", unsafe_allow_html=True)
-
