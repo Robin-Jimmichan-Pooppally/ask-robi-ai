@@ -34,7 +34,7 @@ if "show_more" not in st.session_state:
 if "greeted" not in st.session_state:
     st.session_state.greeted = False
 
-# ✅ Greeting message (only once, glowing)
+# ✅ Greeting message (only once, now glowing)
 if not st.session_state.greeted:
     greeting_html = """
     <div style='
@@ -54,10 +54,7 @@ if not st.session_state.greeted:
     </div>
     """
     st.markdown(greeting_html, unsafe_allow_html=True)
-    st.session_state.history.append({
-        "role": "assistant",
-        "content": "👋 Hey Robin! I'm Portfoli-AI 🤖, your glowing portfolio assistant."
-    })
+    st.session_state.history.append({"role": "assistant", "content": "👋 Hey Robin! I'm Portfoli-AI 🤖, your glowing portfolio assistant."})
     st.session_state.greeted = True
 
 # -----------------------
@@ -120,7 +117,7 @@ if prompt := st.chat_input("Ask about this project or your portfolio..."):
     st.chat_message("user").markdown(prompt)
     st.session_state.history.append({"role": "user", "content": prompt})
 
-    # Placeholder for actual Groq API logic (to be connected later)
+    # Placeholder for actual Groq API logic
     response = f"Here’s some info about **{selected_project}** from the {selected_category} category!"
     st.chat_message("assistant").markdown(response)
     st.session_state.history.append({"role": "assistant", "content": response})
