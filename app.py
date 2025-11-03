@@ -1,180 +1,87 @@
-import streamlit as st
-
-# --- Streamlit page config ---
-st.set_page_config(
-    page_title="AI Voice Assistant",
-    page_icon="🎧",
-    layout="centered",
-    initial_sidebar_state="collapsed"
-)
-
-# --- Custom CSS for Dark + Neon Blue theme ---
-st.markdown("""
-    <style>
-    /* Background */
-    .stApp {
-        background-color: #0E1117;
-        color: #EAEAEA;
-        font-family: 'Poppins', sans-serif;
-    }
-
-    /* Headers */
-    h1, h2, h3, h4, h5 {
-        color: #00FFFF !important;
-        text-shadow: 0 0 12px rgba(0, 255, 255, 0.7);
-    }
-
-    /* Buttons */
-    div.stButton > button {
-        background-color: transparent;
-        color: #00FFFF;
-        border: 1px solid #00FFFF;
-        border-radius: 8px;
-        padding: 0.5rem 1.2rem;
-        transition: all 0.3s ease-in-out;
-    }
-
-    div.stButton > button:hover {
-        background-color: #00FFFF;
-        color: #0E1117;
-        box-shadow: 0 0 20px #00FFFF;
-    }
-
-    /* Text Inputs */
-    input, textarea {
-        background-color: #1A1D24 !important;
-        color: #EAEAEA !important;
-        border: 1px solid #00FFFF !important;
-        border-radius: 6px !important;
-    }
-
-    /* Audio player */
-    audio {
-        filter: drop-shadow(0 0 8px #00FFFF);
-    }
-
-    /* Hide Streamlit footer */
-    footer {visibility: hidden;}
-    </style>
-""", unsafe_allow_html=True)
-
 # app_fixed.py
 """
-Robin's Portfoli-AI - improved Streamlit app (dark-only theme)
+Robin's Portfoli-AI (app_fixed.py)
+Dark + Neon Blue themed Streamlit chatbot for Robin Jimmichan P's 21 projects.
 Features:
-- Dark mode UI
-- Legendary gold accent color
-- Project cards with repo links and README reader
-- Global TTS toggle (chat replies are voiced)
-- Caching for generated audio and LLM responses
-- Upload & animate profile image
-- Uses robi_context.ROBIN_CONTEXT for system context
+- Chat UI powered by Groq (optional - requires GROQ_API_KEY in Streamlit secrets)
+- TTS (Google gTTS) with caching
+- Dark theme + neon accent, animated avatar support
+- Project cards linking to GitHub repos and runtime README fetching (raw URLs)
+- Safe behavior: displays README & code fetched from GitHub raw URLs (no hallucinated code)
 """
-
 import streamlit as st
 from datetime import datetime
-import io
-import hashlib
+import io, hashlib, base64, requests, time
 from gtts import gTTS
-from groq import Groq
-import time
-import base64
-import textwrap
+from pathlib import Path
+from typing import Optional
 
-# Import expanded context (detailed project descriptions + code snippets)
+# Import the context and project index
 from robi_context import ROBIN_CONTEXT, PROJECTS_INDEX
 
-# ----------------- Page config -----------------
-st.set_page_config(
-    page_title="Robin's Portfoli-AI",
-    page_icon="🤖",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
+# ---------- Page config ----------
+st.set_page_config(page_title="Robin's Portfoli-AI",
+                   page_icon="🤖",
+                   layout="wide",
+                   initial_sidebar_state="expanded")
 
-# ----------------- Styling (dark theme + accent) -----------------
-ACCENT_COLOR = "#FFD700"  # legendary gold
-DARK_BG = "#0f1115"
-CARD_BG = "#111215"
-TEXT_COLOR = "#E6EDF3"
+# ---------- Styling ----------
+ACCENT = "#00D0FF"  # Neon blue accent
+DARK_BG = "#0b0f14"
+CARD_BG = "#0f1317"
+TEXT = "#e6eef3"
 
-_custom_style = f"""
+st.markdown(f"""
 <style>
-html, body, .reportview-container, .main {{
-    background-color: {DARK_BG};
-    color: {TEXT_COLOR};
+/* App background */
+.reportview-container, .main {{
+  background-color: {DARK_BG};
+  color: {TEXT};
 }}
 section.main .block-container {{
-    padding-top: 1rem;
-    padding-bottom: 2rem;
+  max-width: 1200px;
+  padding-top: 16px;
+  padding-bottom: 40px;
 }}
-.stButton>button {{
-    border-radius: 8px;
-}}
+h1,h2,h3,h4,h5 {{ color: {ACCENT}; text-shadow: 0 0 10px rgba(0,208,255,0.12); }}
 .card {{
-    background: linear-gradient(180deg, {CARD_BG}, #0b0c0f);
-    border-radius: 12px;
-    padding: 16px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.6);
-    transition: transform 0.12s ease-in-out;
+  background: linear-gradient(180deg, {CARD_BG}, #07090b);
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+  transition: transform .12s ease-in-out, box-shadow .12s ease-in-out;
 }}
-.card:hover {{ transform: translateY(-6px); }}
-.accent {{
-    color: {ACCENT_COLOR};
-}}
+.card:hover {{ transform: translateY(-6px); box-shadow: 0 14px 40px rgba(0,208,255,0.06); }}
 .badge {{
-    display:inline-block;
-    padding:4px 8px;
-    border-radius:6px;
-    font-size:12px;
-    background: rgba(255,215,0,0.12);
-    color: {ACCENT_COLOR};
-    margin-right:6px;
+  display:inline-block;
+  padding:4px 8px;
+  border-radius:6px;
+  font-size:12px;
+  background: rgba(0,208,255,0.06);
+  color: {ACCENT};
+  margin-right:6px;
 }}
-.small-muted {{ color: #9aa3b2; font-size:12px; }}
+.small-muted {{ color: #93a1aa; font-size:13px; }}
 .avatar {{
-    border-radius: 12px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.6);
-    width:120px;
-    height:120px;
-    object-fit:cover;
-    transition: transform 0.6s ease-in-out;
+  border-radius:12px;
+  width:120px;height:120px;object-fit:cover;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
 }}
-.avatar.animate {{ transform: translateY(-6px) scale(1.03); }}
-.speaker {{
-    width:28px; height:28px; border-radius:50%;
-    display:inline-flex; align-items:center; justify-content:center;
-    background: linear-gradient(90deg, rgba(255,215,0,0.18), rgba(255,215,0,0.08));
-    color: {ACCENT_COLOR};
+.audio-btn {{
+  background: rgba(0,208,255,0.06);
+  border-radius: 8px; padding:6px 8px; color:{ACCENT};
 }}
-.footer-note {{ color:#9aa3b2; font-size:12px; margin-top:10px; }}
+footer {{visibility:hidden;}} /* hide streamlit footer */
 </style>
-"""
-st.markdown(_custom_style, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
-# ----------------- Helpers -----------------
-@st.cache_resource
-def init_groq():
-    api_key = st.secrets.get("GROQ_API_KEY")
-    if not api_key:
-        st.error("GROQ_API_KEY missing in Streamlit secrets. Add it and redeploy.")
-        st.stop()
-    return Groq(api_key=api_key)
-
-# init client
-try:
-    groq_client = init_groq()
-except Exception as e:
-    st.error(f"Unable to init Groq client: {e}")
-    st.stop()
-
-# Simple hash util for caching audio / responses
+# ---------- Helpers ----------
 def _hash_text(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
-# TTS caching (response_text -> bytes)
-@st.cache_data(ttl=60 * 60 * 24)  # cache 24h
-def generate_tts_bytes(text: str) -> bytes:
+@st.cache_data(ttl=60*60*24)
+def generate_tts_bytes(text: str) -> Optional[bytes]:
+    """Generate TTS audio bytes for text and cache them."""
     try:
         tts = gTTS(text=text, lang="en", slow=False)
         fp = io.BytesIO()
@@ -182,222 +89,200 @@ def generate_tts_bytes(text: str) -> bytes:
         fp.seek(0)
         return fp.read()
     except Exception as e:
-        # propagate as None for caller
+        st.error(f"TTS generation failed: {e}")
         return None
 
-# LLM streaming wrapper (non-blocking mimic)
-def generate_llm_response(messages_for_api):
-    """
-    Use Groq client to send messages and return the assistant text.
-    We try streaming; fallback to single response if streaming not available.
-    """
+def fetch_raw_url(url: str, timeout=10) -> Optional[str]:
+    """Fetch raw text from a URL (GitHub raw README or code). Returns str or None."""
     try:
-        stream = groq_client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=messages_for_api,
-            temperature=0.6,
-            max_tokens=1500,
-            top_p=0.9,
-            stream=True,
-            timeout=45
-        )
-        # collect
-        full = ""
+        r = requests.get(url, timeout=timeout)
+        if r.status_code == 200:
+            return r.text
+        else:
+            return None
+    except Exception:
+        return None
+
+# Minimal Groq client initializer (lazy - optional usage)
+def get_groq_client():
+    try:
+        from groq import Groq
+        api_key = st.secrets.get("GROQ_API_KEY")
+        if not api_key:
+            return None
+        return Groq(api_key=api_key)
+    except Exception:
+        return None
+
+groq_client = get_groq_client()
+
+def call_groq_chat(system_prompt: str, messages: list):
+    """Call Groq chat completions - streaming or non-streaming.
+       Returns (response_text, error_str_or_None)."""
+    if groq_client is None:
+        return None, "GROQ client not configured (set GROQ_API_KEY in Streamlit secrets)."
+    try:
+        # Build messages
+        msgs = [{"role":"system","content":system_prompt}]
+        for m in messages:
+            msgs.append({"role":m["role"], "content":m["content"]})
+        # try streaming
+        stream = groq_client.chat.completions.create(model="llama-3.3-70b-versatile",
+                                                    messages=msgs, temperature=0.6, max_tokens=1500,
+                                                    top_p=0.9, stream=True, timeout=60)
+        text = ""
         for chunk in stream:
             delta = chunk.choices[0].delta
-            if delta and getattr(delta, "content", None):
-                token = delta.content
-                full += token
-        return full, None
+            if getattr(delta, "content", None):
+                text += delta.content
+        return text, None
     except Exception as e:
-        # fallback single-call (non-stream)
+        # fallback single call
         try:
-            resp = groq_client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=messages_for_api,
-                temperature=0.6,
-                max_tokens=1500,
-                top_p=0.9,
-                stream=False,
-                timeout=45
-            )
-            choice = resp.choices[0].message.content
-            return choice, None
+            resp = groq_client.chat.completions.create(model="llama-3.3-70b-versatile",
+                                                       messages=msgs, temperature=0.6, max_tokens=1500,
+                                                       top_p=0.9, stream=False, timeout=60)
+            return resp.choices[0].message.content, None
         except Exception as e2:
             return None, str(e2)
 
-# Cached LLM wrapper keyed by messages hash
-@st.cache_data(ttl=60 * 60)  # cache 1 hour
-def cached_llm_response(system_context: str, history: tuple):
-    """
-    history: tuple of (role, content) items
-    """
-    messages = [{"role": "system", "content": system_context}]
-    for r, c in history:
-        messages.append({"role": r, "content": c})
-    resp, err = generate_llm_response(messages)
-    if err:
-        raise RuntimeError(err)
-    return resp
-
-# ----------------- Sidebar -----------------
+# ---------- Sidebar ----------
 with st.sidebar:
-    st.markdown(f"<h3 style='color:{ACCENT_COLOR}; margin-bottom:4px;'>🤖 Robin's Portfoli-AI</h3>", unsafe_allow_html=True)
-    st.markdown("<div class='small-muted'>Your interactive guide to Robin's 21 projects — ask any project, technique, or code snippet.</div>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='color:{ACCENT};margin-bottom:4px;'>🤖 Robin's Portfoli-AI</h3>", unsafe_allow_html=True)
+    st.markdown("<div class='small-muted'>Interactive guide to Robin's 21 projects — exact READMEs and code pulled from your GitHub.</div>", unsafe_allow_html=True)
     st.markdown("---")
-
-    # Profile upload and animation
     st.markdown("### 👤 Profile")
-    uploaded = st.file_uploader("Upload avatar (PNG/GIF) — the app will animate it", type=["png","jpg","jpeg","gif"])
-    animate_avatar = st.checkbox("Animate avatar (subtle float)", True)
+    uploaded = st.file_uploader("Upload avatar (PNG/GIF) — will preview here", type=["png","jpg","jpeg","gif"])
     if uploaded:
         raw = uploaded.read()
         b64 = base64.b64encode(raw).decode()
-        img_html = f"<img src='data:image/jpeg;base64,{b64}' class='avatar {'animate' if animate_avatar else ''}'/>"
-        st.markdown(img_html, unsafe_allow_html=True)
-        st.caption("Uploaded avatar is previewed above. For best animation use a PNG with transparent background or a short GIF.")
+        st.markdown(f"<img src='data:image/png;base64,{b64}' class='avatar'/>", unsafe_allow_html=True)
     else:
-        # default placeholder avatar (simple colored box)
-        placeholder_svg = f"""
-        <div style='display:flex;align-items:center;gap:12px'>
-            <div style='width:80px;height:80px;border-radius:12px;background:linear-gradient(135deg,#242526,#151516);display:flex;align-items:center;justify-content:center;color:{ACCENT_COLOR};font-weight:600'>
-                RJ
-            </div>
-            <div style='line-height:1'>
-                <div style='font-weight:700'>Robin Jimmichan P</div>
-                <div class='small-muted'>Bengaluru · Business Analyst</div>
-            </div>
-        </div>
-        """
-        st.markdown(placeholder_svg, unsafe_allow_html=True)
+        st.markdown(f"<div style='display:flex;gap:10px;align-items:center'><div style='width:72px;height:72px;border-radius:12px;background:linear-gradient(135deg,#081018,#0d1216);display:flex;align-items:center;justify-content:center;color:{ACCENT};font-weight:700'>RJ</div><div><strong>Robin Jimmichan P</strong><div class='small-muted'>Bengaluru · Business Analyst</div></div></div>", unsafe_allow_html=True)
 
     st.markdown("---")
-    # Links & contact
-    st.markdown("### 🔗 Quick Links")
+    st.markdown("### 🔗 Links")
     st.markdown(f"- GitHub: [Robin-Jimmichan-Pooppally](https://github.com/Robin-Jimmichan-Pooppally)")
-    st.markdown(f"- LinkedIn: [Robin](https://{st.session_state.get('linkedin', 'www.linkedin.com/in/robin-jimmichan-pooppally-676061291')})")
-    st.markdown(f"- Email: <a href='mailto:rjimmichan@gmail.com' style='color:{ACCENT_COLOR}'>rjimmichan@gmail.com</a>", unsafe_allow_html=True)
-
+    st.markdown(f"- LinkedIn: [Robin](https://www.linkedin.com/in/robin-jimmichan-pooppally-676061291)")
+    st.markdown(f"- Email: <a href='mailto:rjimmichan@gmail.com' style='color:{ACCENT}'>{'rjimmichan@gmail.com'}</a>", unsafe_allow_html=True)
     st.markdown("---")
-    st.markdown("### ⚙️ Settings")
     # TTS toggle
     if "tts_enabled" not in st.session_state:
-        st.session_state.tts_enabled = True  # default on for chat replies
+        st.session_state.tts_enabled = True
     st.session_state.tts_enabled = st.checkbox("Enable voice replies (TTS)", value=st.session_state.tts_enabled)
-    st.markdown("<div class='small-muted'>Voice replies will be generated using Google TTS (cached).</div>", unsafe_allow_html=True)
+    st.markdown("<div class='small-muted'>Voice replies use Google TTS and are cached locally.</div>", unsafe_allow_html=True)
     st.markdown("---")
     st.markdown("### 📚 Projects")
     if st.button("Show all repo links"):
         for p in PROJECTS_INDEX:
             st.markdown(f"- [{p['name']}]({p['repo']})  <span class='small-muted'>({p['category']})</span>", unsafe_allow_html=True)
     st.markdown("---")
-    st.caption("Built with ❤️ • Dark-only theme • Legendary accent")
+    st.caption("Built with ❤️ — Dark + Neon Blue theme")
 
-# ----------------- Main header -----------------
+# ---------- Header ----------
 st.markdown(f"""
-<div style='display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;'>
+<div style="display:flex;justify-content:space-between;align-items:center;">
   <div>
-    <h1 style='margin:0;color:{ACCENT_COLOR};'>🤖 Robin's Portfoli-AI</h1>
-    <div class='small-muted'>Interactive guide to Robin's 21 end-to-end projects • Ask any project for code, steps, or results</div>
+    <h1 style="margin:0;color:{ACCENT}">🤖 Robin's Portfoli-AI</h1>
+    <div class='small-muted'>Ask about projects, steps, SQL, DAX, Excel formulas, or view exact README files from GitHub.</div>
   </div>
-  <div style='text-align:right'>
-    <div style='font-size:13px;color:#9aa3b2'>Welcome — {datetime.utcnow().strftime("%b %d, %Y • %H:%M UTC")}</div>
-    <div style='font-size:12px;color:#9aa3b2'>Voice replies: {'ON' if st.session_state.tts_enabled else 'OFF'}</div>
+  <div style="text-align:right">
+    <div class='small-muted'>UTC {datetime.utcnow().strftime('%b %d, %Y • %H:%M')}</div>
+    <div class='small-muted'>Voice replies: {'ON' if st.session_state.tts_enabled else 'OFF'}</div>
   </div>
 </div>
 """, unsafe_allow_html=True)
 
-# ----------------- Global chat history state -----------------
+# ---------- Initialize chat state ----------
 if "messages" not in st.session_state:
-    # default welcome messages
     st.session_state.messages = [
-        {"role": "system", "content": ROBIN_CONTEXT},
-        {"role": "assistant", "content": "Hi — I am Robin's Portfoli-AI. Ask me anything about his 21 projects, steps, code, or results. Try: 'Show me the SQL queries used in the Telco Churn project'."}
+        {"role":"system", "content": ROBIN_CONTEXT},
+        {"role":"assistant", "content":"Hi — I'm Robin's Portfoli-AI. Ask me about any project, show me SQL/DAX/exact README, or ask for step-by-step methodology."}
     ]
 
-# render chat history
-for msg in st.session_state.messages[1:]:
-    role = msg["role"]
-    avatar = "🤖" if role == "assistant" else "👤"
-    with st.chat_message(role, avatar=avatar):
-        st.markdown(msg["content"])
+# Show history
+for m in st.session_state.messages[1:]:
+    with st.chat_message(m["role"], avatar="🤖" if m["role"]=="assistant" else "👤"):
+        st.markdown(m["content"])
 
-# ----------------- Show Projects Section -----------------
-st.markdown("## 📂 Projects — browse and ask")
-cols = st.columns([1,1,1,1])
-
-# display project cards grouped by index
-def _render_project_card(proj, col):
-    with col:
-        st.markdown(f"<div class='card'>", unsafe_allow_html=True)
-        st.markdown(f"<div style='display:flex;justify-content:space-between;align-items:center'>"
-                    f"<div><span class='badge'>{proj['category']}</span> <strong class='accent'>{proj['name']}</strong></div>"
-                    f"<div><span class='small-muted'>Updated: {proj.get('updated','2025')}</span></div>"
-                    f"</div>", unsafe_allow_html=True)
+# ---------- Projects grid ----------
+st.markdown("## 📂 Projects")
+cols = st.columns(4)
+def render_proj_card(proj, column):
+    with column:
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
+        st.markdown(f"<div style='display:flex;justify-content:space-between;align-items:center'><div><span class='badge'>{proj['category']}</span> <strong style='color:{ACCENT}'>{proj['name']}</strong></div><div class='small-muted'>{proj.get('updated','2025')}</div></div>", unsafe_allow_html=True)
         st.markdown(f"<div class='small-muted' style='margin-top:8px'>{proj.get('short','—')}</div>", unsafe_allow_html=True)
         st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-        # action buttons
-        col1, col2, col3 = st.columns([1,1,1])
-        with col1:
+        c1, c2, c3 = st.columns([1,1,1])
+        with c1:
             if st.button("🔗 Open Repo", key=f"repo_{proj['id']}"):
-                st.experimental_set_query_params(open_repo=proj['repo'])
                 st.write(f"[Open repo]({proj['repo']})")
-        with col2:
+        with c2:
             if st.button("📖 Show README", key=f"readme_{proj['id']}"):
-                # If full readme text is in context, display; else show repo link
-                content = proj.get("readme_text")
+                content = fetch_raw_url(proj.get("readme_url"))
                 if content:
                     st.markdown("---")
                     st.markdown(f"### README — {proj['name']}")
                     st.markdown(content)
+                    # TTS option
                     if st.session_state.tts_enabled:
-                        audio_bytes = generate_tts_bytes(content)
+                        audio_bytes = generate_tts_bytes(content[:2500])  # avoid too long
                         if audio_bytes:
                             st.audio(audio_bytes, format="audio/mp3")
                 else:
-                    st.markdown(f"Open repo for README: [link]({proj['repo']})")
-        with col3:
+                    st.warning("README not found at expected raw URL. Open repository link to inspect.")
+        with c3:
             if st.button("💬 Ask about this project", key=f"ask_{proj['id']}"):
-                # Pre-fill chat input with project-based question
-                prompt = f"Explain the '{proj['name']}' project end-to-end. Include dataset, steps, key queries/code, and business impact. Repo: {proj['repo']}"
+                # pre-fill question
+                prompt = f"Explain the '{proj['name']}' project end-to-end. Include dataset, steps, key queries/code location (repo: {proj['repo']}), and business impact."
                 st.session_state.messages.append({"role":"user","content":prompt})
                 st.experimental_rerun()
         st.markdown("</div>", unsafe_allow_html=True)
 
-# render first 8 projects in grid
-for i, proj in enumerate(PROJECTS_INDEX[:8]):
-    _render_project_card(proj, cols[i % 4])
+# Render projects in rows
+for i, p in enumerate(PROJECTS_INDEX):
+    render_proj_card(p, cols[i % 4])
 
 st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
 
-# ----------------- Chat input -----------------
-user_input = st.chat_input("Ask about Robin's projects, code, DAX, SQL or steps...")
+# ---------- Chat input ----------
+user_input = st.chat_input("Ask about Robin's projects, SQL, DAX, Excel formulas, or request a README...")
 if user_input:
-    # add to history and show
     st.session_state.messages.append({"role":"user","content":user_input})
     with st.chat_message("user", avatar="👤"):
         st.markdown(user_input)
-    # Build minimal history for LLM (we include system context + last 6 messages)
-    recent = tuple((m["role"], m["content"]) for m in st.session_state.messages[-6:])
+
+    # Prepare recent history and call Groq if available
+    recent = st.session_state.messages[-6:]
     try:
         with st.chat_message("assistant", avatar="🤖"):
             placeholder = st.empty()
             placeholder.markdown("Thinking...")
-            # call cached LLM
-            assistant_text = cached_llm_response(ROBIN_CONTEXT, recent)
-            placeholder.markdown(assistant_text)
-            st.session_state.messages.append({"role":"assistant","content":assistant_text})
-            # TTS playback
-            if st.session_state.tts_enabled:
-                audio_bytes = generate_tts_bytes(assistant_text)
-                if audio_bytes:
-                    st.audio(audio_bytes, format="audio/mp3")
+
+            if groq_client:
+                # call groq
+                response_text, err = call_groq_chat(ROBIN_CONTEXT, recent)
+                if err:
+                    placeholder.error("LLM call failed: " + err)
+                    # fallback local assistant-style reply using context (short)
+                    reply = "I couldn't reach the LLM — I can still fetch READMEs and show code from your GitHub repos. Try 'Show README for <project name>'."
+                    st.session_state.messages.append({"role":"assistant","content":reply})
+                    placeholder.markdown(reply)
+                else:
+                    st.session_state.messages.append({"role":"assistant","content":response_text})
+                    placeholder.markdown(response_text)
+                    if st.session_state.tts_enabled:
+                        audio_bytes = generate_tts_bytes(response_text[:3000])
+                        if audio_bytes:
+                            st.audio(audio_bytes, format="audio/mp3")
+            else:
+                # Groq not configured
+                placeholder.info("Groq LLM not configured. Set GROQ_API_KEY in Streamlit secrets to enable chat. Meanwhile, I can fetch READMEs & code from GitHub.")
+                st.session_state.messages.append({"role":"assistant","content":"Groq not configured. I can fetch README files and code directly from your GitHub repos — ask 'Show README for <project name>'."})
     except Exception as e:
-        st.error("AI request failed: " + str(e))
+        st.error("Error while processing your request: " + str(e))
 
-# ----------------- Footer / complete project list -----------------
+# ---------- Footer ----------
 st.markdown("---")
-st.markdown("<div class='small-muted'>All project READMEs are sourced from Robin's verified GitHub repositories. The assistant uses the full project context to answer code & methodology questions.</div>", unsafe_allow_html=True)
-st.markdown("<div class='footer-note'>Tip: For exact SQL/DAX snippets, ask: 'Show me the SQL used in <project name>' or 'Show DAX measures for <Power BI project name>'.</div>", unsafe_allow_html=True)
-
-# ----------------- End -----------------
+st.markdown("<div class='small-muted'>Tip: For exact SQL/DAX/Excel formulas, click 'Show README' for a project to view the authentic README and code files from that repository. If you want, provide repo branch or path in the PROJECTS_INDEX in robi_context.py.</div>", unsafe_allow_html=True)
