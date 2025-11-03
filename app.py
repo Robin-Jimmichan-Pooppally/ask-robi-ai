@@ -1,92 +1,141 @@
 import streamlit as st
-from openai import OpenAI
-from robi_context import context
+from groq import Groq
+from robi_context import ROBIN_GREETING, ROBIN_CONTEXT, PROJECTS, PROJECT_SUMMARY
 
-# --------------------------
-# 🔧 APP CONFIGURATION
-# --------------------------
-st.set_page_config(page_title="Portfoli-AI | Robin Jimmichan", page_icon="🤖", layout="centered")
+# ------------------ Groq Setup ------------------
+client = Groq(api_key=st.secrets["GROQ_API_KEY"])
 
-# --------------------------
-# 🎨 CUSTOM CSS (Dark Frosted Glass UI)
-# --------------------------
+# ------------------ Page Config ------------------
+st.set_page_config(
+    page_title="Portfoli-AI | Robin’s Portfolio Assistant",
+    page_icon="💙",
+    layout="wide"
+)
+
+# ------------------ Custom CSS ------------------
 st.markdown("""
-    <style>
-    body {
-        background: radial-gradient(circle at top left, #0a0a0a, #111);
-        color: #eaeaea;
-    }
-    .stChatMessage {
-        background: rgba(25, 25, 25, 0.6);
-        backdrop-filter: blur(12px);
-        border-radius: 16px;
-        padding: 14px;
-        margin: 8px 0;
-        color: #fff;
-        animation: fadeIn 0.6s ease-in-out;
-    }
-    @keyframes fadeIn {
-        from {opacity: 0; transform: translateY(10px);}
-        to {opacity: 1; transform: translateY(0);}
-    }
-    .chat-bubble {
-        border-radius: 18px;
-        padding: 12px 16px;
-        background: rgba(255, 255, 255, 0.08);
-        box-shadow: 0 0 10px rgba(0,255,255,0.2);
-    }
-    h1 {
-        text-align: center;
-        color: #00ffff;
-        text-shadow: 0 0 12px #00ffff;
-    }
-    </style>
+<style>
+/* Global layout */
+[data-testid="stAppViewContainer"] {
+    background: linear-gradient(180deg, #000000 0%, #0a0a0f 100%);
+    color: #e0f0ff;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Neon header */
+h1, h2, h3, h4 {
+    color: #00bfff;
+    text-shadow: 0 0 12px #00bfff;
+}
+
+/* Chat containers */
+.chat-bubble-user, .chat-bubble-bot {
+    border-radius: 20px;
+    padding: 15px 20px;
+    margin: 8px 0;
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(0,191,255,0.3);
+    box-shadow: 0 0 10px rgba(0,191,255,0.2);
+}
+.chat-bubble-user {
+    background: rgba(0,191,255,0.1);
+    color: #00bfff;
+    align-self: flex-end;
+}
+.chat-bubble-bot {
+    background: rgba(255,255,255,0.05);
+    color: #e0f0ff;
+    align-self: flex-start;
+}
+
+/* Sidebar */
+[data-testid="stSidebar"] {
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(15px);
+    border-right: 2px solid rgba(0,191,255,0.3);
+}
+
+/* Buttons */
+div.stButton > button {
+    background: linear-gradient(90deg, #001f33, #003366);
+    color: #00bfff;
+    border: 1px solid #00bfff;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 10px rgba(0,191,255,0.4);
+}
+div.stButton > button:hover {
+    background: #00bfff;
+    color: #000;
+    box-shadow: 0 0 20px #00bfff;
+    transform: translateY(-2px);
+}
+</style>
 """, unsafe_allow_html=True)
 
-# --------------------------
-# ⚙️ LOAD MODEL CLIENT
-# --------------------------
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+# ------------------ UI Header ------------------
+st.markdown("<h1 style='text-align:center;'>💙 Portfoli-AI — Robin’s Intelligent Portfolio Assistant</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center;color:#9edbff;'>Explore verified Excel, SQL, Power BI, and Python projects with real code, logic, and insights.</p>", unsafe_allow_html=True)
+st.markdown("---")
 
-# --------------------------
-# 🚀 APP HEADER
-# --------------------------
-st.title("🤖 Portfoli-AI")
-st.caption(f"Meet {context['owner_name']}’s intelligent portfolio assistant")
+# ------------------ Sidebar ------------------
+st.sidebar.image("https://avatars.githubusercontent.com/u/167973515?v=4", width=100)
+st.sidebar.markdown("### 🔗 Connect")
+st.sidebar.markdown("""
+- [GitHub](https://github.com/Robin-Jimmichan-Pooppally)
+- [LinkedIn](https://www.linkedin.com/in/robin-jimmichan-pooppally-676061291)
+- 📧 rjimmichan@gmail.com
+""")
+st.sidebar.markdown("---")
 
-# --------------------------
-# 💬 CHAT SETUP
-# --------------------------
-if "messages" not in st.session_state:
-    st.session_state["messages"] = []
-    # Auto-greet when app starts
-    st.session_state["messages"].append({"role": "assistant", "content": context["greeting_message"]})
+# ------------------ Category Filter ------------------
+categories = ["All", "Excel", "Power BI", "SQL", "Python"]
+selected_category = st.sidebar.radio("🧩 Filter by Category", categories)
 
-for msg in st.session_state["messages"]:
-    with st.chat_message(msg["role"]):
-        st.markdown(f"<div class='chat-bubble'>{msg['content']}</div>", unsafe_allow_html=True)
+# Filter projects
+filtered_projects = PROJECTS if selected_category == "All" else [p for p in PROJECTS if p["category"] == selected_category]
 
-# --------------------------
-# ✏️ USER INPUT
-# --------------------------
-prompt = st.chat_input("Ask about Robin’s projects...")
+# ------------------ Display Projects ------------------
+st.subheader(f"📁 Showing {len(filtered_projects)} {selected_category} Projects")
 
-if prompt:
-    st.session_state["messages"].append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(f"<div class='chat-bubble'>{prompt}</div>", unsafe_allow_html=True)
+for proj in filtered_projects:
+    with st.container():
+        st.markdown(f"""
+        <div class='chat-bubble-bot'>
+            <b>{proj['name']}</b><br>
+            <small><i>{proj['short']}</i></small><br>
+            🔗 <a href='{proj['repo']}' target='_blank' style='color:#00bfff;'>View on GitHub</a>
+        </div>
+        """, unsafe_allow_html=True)
 
-    # Build the full prompt for the model
-    full_prompt = f"{context['persona']}\n\nUser question: {prompt}\n\nUse only verified info from context below:\n{context}"
+st.markdown("---")
 
-    with st.chat_message("assistant"):
-        with st.spinner("Analyzing Robin’s portfolio..."):
-            response = client.chat.completions.create(
-                model="gpt-5",
-                messages=[{"role": "system", "content": full_prompt}],
-                temperature=0.2
-            )
-            answer = response.choices[0].message.content
-            st.markdown(f"<div class='chat-bubble'>{answer}</div>", unsafe_allow_html=True)
+# ------------------ Chat Section ------------------
+st.subheader("💬 Chat with Portfoli-AI")
 
-    st.session_state["messages"].append({"role": "assistant", "content": answer})
+if "history" not in st.session_state:
+    st.session_state.history = [{"role": "assistant", "content": ROBIN_GREETING}]
+
+# Display chat history
+for chat in st.session_state.history:
+    if chat["role"] == "assistant":
+        st.markdown(f"<div class='chat-bubble-bot'>{chat['content']}</div>", unsafe_allow_html=True)
+    else:
+        st.markdown(f"<div class='chat-bubble-user'>{chat['content']}</div>", unsafe_allow_html=True)
+
+# Chat input
+user_input = st.chat_input("Ask about a project, dataset, or formula...")
+if user_input:
+    st.session_state.history.append({"role": "user", "content": user_input})
+
+    with st.spinner("Thinking..."):
+        response = client.chat.completions.create(
+            model="llama-3.1-70b-versatile",
+            messages=[
+                {"role": "system", "content": ROBIN_CONTEXT},
+                *st.session_state.history
+            ]
+        )
+        answer = response.choices[0].message.content
+        st.session_state.history.append({"role": "assistant", "content": answer})
+        st.experimental_rerun()
