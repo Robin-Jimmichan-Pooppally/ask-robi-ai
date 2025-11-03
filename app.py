@@ -17,6 +17,7 @@ import os
 import tempfile
 import textwrap
 import time
+import base64
 from urllib.parse import urlparse
 
 # Import your verified context (must match what we finalized)
@@ -430,34 +431,34 @@ def speak_text(text):
         # Limit text length to prevent very long audio generation
         if len(text) > 500:
             text = text[:500] + "... [text truncated for TTS]"
-            
-        # Generate speech
-        tts = gTTS(text=text, lang='en', slow=False, tld='com')
         
-        # Use a temporary file to store the audio
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as fp:
-            temp_filename = fp.name
-            
-        # Save the audio to the temporary file
-        tts.save(temp_filename)
+        # Generate speech using gTTS
+        tts = gTTS(text=text, lang='en', slow=False)
         
-        # Play the audio
-        audio_file = open(temp_filename, 'rb')
-        audio_bytes = audio_file.read()
+        # Use BytesIO to handle the audio in memory
+        audio_buffer = BytesIO()
+        tts.write_to_fp(audio_buffer)
+        audio_buffer.seek(0)
         
-        # Display audio player
-        st.audio(audio_bytes, format='audio/mp3')
+        # Convert to base64 for better compatibility
+        audio_b64 = base64.b64encode(audio_buffer.read()).decode('utf-8')
+        audio_html = f'''
+        <audio autoplay="true" controls>
+            <source src="data:audio/mp3;base64,{audio_b64}" type="audio/mp3">
+            Your browser does not support the audio element.
+        </audio>
+        '''
         
-        # Clean up the temporary file
-        audio_file.close()
-        try:
-            os.unlink(temp_filename)
-        except:
-            pass
-            
+        # Display the audio player
+        st.components.v1.html(audio_html, height=50)
+        
+        # Also provide a fallback audio player
+        audio_buffer.seek(0)
+        st.audio(audio_buffer, format='audio/mp3')
+        
     except Exception as e:
         st.warning(f"⚠️ TTS Error: {str(e)}")
-        st.warning("Note: Some network environments may block TTS. Try checking your internet connection or disabling any VPN.")
+        st.warning("Note: This feature requires an internet connection. Please check your connection and try again.")
 
 def save_chat_local(history):
     try:
@@ -604,9 +605,11 @@ if submit_button and user_input:
     # TTS (plays if toggled in sidebar)
     if tts_toggle:
         try:
-            speak_text(bot_text)
-        except Exception:
-            st.warning("TTS failed for this response.")
+            with st.spinner("Generating speech..."):
+                speak_text(bot_text)
+        except Exception as e:
+            st.warning(f"TTS failed: {str(e)}")
+            st.warning("Please ensure you have an active internet connection and try again.")
 
     # Rerun to update the UI
     st.experimental_rerun()
