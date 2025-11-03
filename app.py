@@ -1,315 +1,343 @@
+# app_fixed.py
 """
-Robi.AI - Fixed Streamlit App (app_fixed.py)
-Dark mode only • Neon cyan accent • TTS for all responses • Robin's Portfoli-AI
-
-This file replaces the original app.py. It imports ROBIN_CONTEXT from robi_context.py (created separately) and provides a polished Streamlit UI with:
-- Dark theme CSS
-- Neon-cyan accent
-- Streaming responses via Groq client (same client usage as before)
-- Built-in TTS for all assistant replies using gTTS (server-side) and browser audio playback
-- Project browser: view README text and code snippets loaded from ROBIN_CONTEXT
-- Speaker toggle and mute/unmute
-
-NOTE: put this file, robi_context.py and requirements.txt in the same folder and set the secret GROQ_API_KEY in Streamlit Cloud.
+Robin's Portfoli-AI - improved Streamlit app (dark-only theme)
+Features:
+- Dark mode UI
+- Legendary gold accent color
+- Project cards with repo links and README reader
+- Global TTS toggle (chat replies are voiced)
+- Caching for generated audio and LLM responses
+- Upload & animate profile image
+- Uses robi_context.ROBIN_CONTEXT for system context
 """
 
 import streamlit as st
+from datetime import datetime
+import io
+import hashlib
+from gtts import gTTS
 from groq import Groq
 import time
-from datetime import datetime
-from gtts import gTTS
-import io
 import base64
-import re
+import textwrap
 
-# Import ROBIN_CONTEXT which contains full project READMEs, code snippets, and metadata
-from robi_context import ROBIN_CONTEXT
+# Import expanded context (detailed project descriptions + code snippets)
+from robi_context import ROBIN_CONTEXT, PROJECTS_INDEX
 
-# ==================== PAGE CONFIGURATION ====================
+# ----------------- Page config -----------------
 st.set_page_config(
     page_title="Robin's Portfoli-AI",
     page_icon="🤖",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
 )
 
-# ==================== DARK THEME CSS + ACCENT ====================
-ACCENT = "#00FFFF"  # Neon Cyan
-st.markdown(f"""
+# ----------------- Styling (dark theme + accent) -----------------
+ACCENT_COLOR = "#FFD700"  # legendary gold
+DARK_BG = "#0f1115"
+CARD_BG = "#111215"
+TEXT_COLOR = "#E6EDF3"
+
+_custom_style = f"""
 <style>
-/* Base dark background */
-body {{ background-color: #0b0f14; color: #e6eef8; }}
-section.main {{ background-color: transparent; }}
-/* Chat bubbles */
-[data-testid='stChatMessage'] .stMarkdown {{ color: #e6eef8; }}
-/* Accent color for buttons and links */
-a, .stButton>button, .stDownloadButton>button {{
-  background: linear-gradient(90deg, rgba(0,255,255,0.06), rgba(0,255,255,0.02));
-  border: 1px solid {ACCENT};
-  color: #e6eef8 !important;
+html, body, .reportview-container, .main {{
+    background-color: {DARK_BG};
+    color: {TEXT_COLOR};
 }}
-.stButton>button:hover {{ box-shadow: 0 0 12px {ACCENT}; }}
-/* Header card */
-.header-card {{ background: linear-gradient(135deg, rgba(102,126,234,0.12), rgba(118,75,162,0.12)); padding:18px; border-radius:12px; }}
-/* Speaker icon style */
-.speaker {{ font-size: 20px; color: {ACCENT}; cursor: pointer; }}
-/* Make sidebar dark */
-[data-testid='stSidebar'] {{ background-color: #071018; color: #dfefff; }}
+section.main .block-container {{
+    padding-top: 1rem;
+    padding-bottom: 2rem;
+}}
+.stButton>button {{
+    border-radius: 8px;
+}}
+.card {{
+    background: linear-gradient(180deg, {CARD_BG}, #0b0c0f);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+    transition: transform 0.12s ease-in-out;
+}}
+.card:hover {{ transform: translateY(-6px); }}
+.accent {{
+    color: {ACCENT_COLOR};
+}}
+.badge {{
+    display:inline-block;
+    padding:4px 8px;
+    border-radius:6px;
+    font-size:12px;
+    background: rgba(255,215,0,0.12);
+    color: {ACCENT_COLOR};
+    margin-right:6px;
+}}
+.small-muted {{ color: #9aa3b2; font-size:12px; }}
+.avatar {{
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+    width:120px;
+    height:120px;
+    object-fit:cover;
+    transition: transform 0.6s ease-in-out;
+}}
+.avatar.animate {{ transform: translateY(-6px) scale(1.03); }}
+.speaker {{
+    width:28px; height:28px; border-radius:50%;
+    display:inline-flex; align-items:center; justify-content:center;
+    background: linear-gradient(90deg, rgba(255,215,0,0.18), rgba(255,215,0,0.08));
+    color: {ACCENT_COLOR};
+}}
+.footer-note {{ color:#9aa3b2; font-size:12px; margin-top:10px; }}
 </style>
-""", unsafe_allow_html=True)
+"""
+st.markdown(_custom_style, unsafe_allow_html=True)
 
-# ==================== SAMPLE QUESTIONS ====================
-SAMPLE_QUESTIONS = [
-    "How did Robin achieve 92% forecasting accuracy?",
-    "Tell me about the Loan Default Risk project",
-    "What are the key findings in the Loan Default Risk analysis?",
-    "Explain the E-commerce Funnel Analysis",
-    "Show me all SQL projects",
-    "What Python projects has Robin done?",
-    "Compare Excel vs Power BI projects",
-    "What's the biggest business impact achieved?",
-    "Explain the RFM segmentation approach",
-    "Tell me about healthcare analytics work"
-]
-
-# ==================== SESSION STATE ====================
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-if "thinking_active" not in st.session_state:
-    st.session_state.thinking_active = False
-
-if "api_error_count" not in st.session_state:
-    st.session_state.api_error_count = 0
-
-if "tts_enabled" not in st.session_state:
-    st.session_state.tts_enabled = True  # by default TTS on for all responses
-
-if "muted" not in st.session_state:
-    st.session_state.muted = False
-
-# ==================== GROQ CLIENT ====================
+# ----------------- Helpers -----------------
 @st.cache_resource
 def init_groq():
-    try:
-        api_key = st.secrets.get("GROQ_API_KEY")
-        if not api_key:
-            st.error("❌ GROQ_API_KEY is empty in Streamlit Cloud Secrets!")
-            st.stop()
-        return Groq(api_key=api_key)
-    except Exception as e:
-        st.error(f"❌ Groq Connection Error: {str(e)}")
-        st.info("Make sure your GROQ_API_KEY is correct in Streamlit Cloud Secrets")
+    api_key = st.secrets.get("GROQ_API_KEY")
+    if not api_key:
+        st.error("GROQ_API_KEY missing in Streamlit secrets. Add it and redeploy.")
         st.stop()
+    return Groq(api_key=api_key)
 
+# init client
 try:
-    client = init_groq()
+    groq_client = init_groq()
 except Exception as e:
-    st.error(f"Failed to initialize: {str(e)}")
+    st.error(f"Unable to init Groq client: {e}")
     st.stop()
 
-# ==================== TTS FUNCTION ====================
-def speak_response(text: str) -> io.BytesIO:
-    """Convert text to speech using gTTS and return BytesIO containing mp3"""
+# Simple hash util for caching audio / responses
+def _hash_text(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+# TTS caching (response_text -> bytes)
+@st.cache_data(ttl=60 * 60 * 24)  # cache 24h
+def generate_tts_bytes(text: str) -> bytes:
     try:
-        tts = gTTS(text=text, lang='en', slow=False)
-        audio_fp = io.BytesIO()
-        tts.write_to_fp(audio_fp)
-        audio_fp.seek(0)
-        return audio_fp
+        tts = gTTS(text=text, lang="en", slow=False)
+        fp = io.BytesIO()
+        tts.write_to_fp(fp)
+        fp.seek(0)
+        return fp.read()
     except Exception as e:
-        st.error(f"TTS Error: {str(e)}")
+        # propagate as None for caller
         return None
 
-# Helper to play audio in streamlit
-def st_audio_bytes(audio_bytes: io.BytesIO):
-    st.audio(audio_bytes, format='audio/mp3')
-
-# ==================== STREAMING RESPONSE ====================
-def stream_llm_response(prompt: str, placeholder) -> tuple:
-    """Stream LLM response with error handling"""
-    st.session_state.thinking_active = True
+# LLM streaming wrapper (non-blocking mimic)
+def generate_llm_response(messages_for_api):
+    """
+    Use Groq client to send messages and return the assistant text.
+    We try streaming; fallback to single response if streaming not available.
+    """
     try:
-        with st.spinner("🚀 Connecting to AI..."):
-            time.sleep(0.2)
-
-        messages_for_api = [
-            {"role": "system", "content": ROBIN_CONTEXT},
-            *[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages if m["role"] in ("user","assistant")]
-        ]
-
-        full_response = ""
-        response_placeholder = placeholder.empty()
-
+        stream = groq_client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=messages_for_api,
+            temperature=0.6,
+            max_tokens=1500,
+            top_p=0.9,
+            stream=True,
+            timeout=45
+        )
+        # collect
+        full = ""
+        for chunk in stream:
+            delta = chunk.choices[0].delta
+            if delta and getattr(delta, "content", None):
+                token = delta.content
+                full += token
+        return full, None
+    except Exception as e:
+        # fallback single-call (non-stream)
         try:
-            stream = client.chat.completions.create(
+            resp = groq_client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=messages_for_api,
-                temperature=0.7,
+                temperature=0.6,
                 max_tokens=1500,
                 top_p=0.9,
-                stream=True,
+                stream=False,
                 timeout=45
             )
+            choice = resp.choices[0].message.content
+            return choice, None
+        except Exception as e2:
+            return None, str(e2)
 
-            for chunk in stream:
-                # defensive access
-                delta = getattr(chunk.choices[0], 'delta', None)
-                if delta and getattr(delta, 'content', None):
-                    token = delta.content
-                    full_response += token
-                    with response_placeholder.container():
-                        st.markdown(full_response + "▌")
+# Cached LLM wrapper keyed by messages hash
+@st.cache_data(ttl=60 * 60)  # cache 1 hour
+def cached_llm_response(system_context: str, history: tuple):
+    """
+    history: tuple of (role, content) items
+    """
+    messages = [{"role": "system", "content": system_context}]
+    for r, c in history:
+        messages.append({"role": r, "content": c})
+    resp, err = generate_llm_response(messages)
+    if err:
+        raise RuntimeError(err)
+    return resp
 
-            with response_placeholder.container():
-                st.markdown(full_response)
+# ----------------- Sidebar -----------------
+with st.sidebar:
+    st.markdown(f"<h3 style='color:{ACCENT_COLOR}; margin-bottom:4px;'>🤖 Robin's Portfoli-AI</h3>", unsafe_allow_html=True)
+    st.markdown("<div class='small-muted'>Your interactive guide to Robin's 21 projects — ask any project, technique, or code snippet.</div>", unsafe_allow_html=True)
+    st.markdown("---")
 
-            st.session_state.thinking_active = False
-            st.session_state.api_error_count = 0
-            return full_response, None
+    # Profile upload and animation
+    st.markdown("### 👤 Profile")
+    uploaded = st.file_uploader("Upload avatar (PNG/GIF) — the app will animate it", type=["png","jpg","jpeg","gif"])
+    animate_avatar = st.checkbox("Animate avatar (subtle float)", True)
+    if uploaded:
+        raw = uploaded.read()
+        b64 = base64.b64encode(raw).decode()
+        img_html = f"<img src='data:image/jpeg;base64,{b64}' class='avatar {'animate' if animate_avatar else ''}'/>"
+        st.markdown(img_html, unsafe_allow_html=True)
+        st.caption("Uploaded avatar is previewed above. For best animation use a PNG with transparent background or a short GIF.")
+    else:
+        # default placeholder avatar (simple colored box)
+        placeholder_svg = f"""
+        <div style='display:flex;align-items:center;gap:12px'>
+            <div style='width:80px;height:80px;border-radius:12px;background:linear-gradient(135deg,#242526,#151516);display:flex;align-items:center;justify-content:center;color:{ACCENT_COLOR};font-weight:600'>
+                RJ
+            </div>
+            <div style='line-height:1'>
+                <div style='font-weight:700'>Robin Jimmichan P</div>
+                <div class='small-muted'>Bengaluru · Business Analyst</div>
+            </div>
+        </div>
+        """
+        st.markdown(placeholder_svg, unsafe_allow_html=True)
 
-        except Exception as stream_error:
-            st.session_state.thinking_active = False
-            error_msg = f"Stream Error: {str(stream_error)}"
-            with response_placeholder.container():
-                st.error(f"🚨 Connection interrupted. Please try again.")
-            st.session_state.api_error_count += 1
-            return None, error_msg
+    st.markdown("---")
+    # Links & contact
+    st.markdown("### 🔗 Quick Links")
+    st.markdown(f"- GitHub: [Robin-Jimmichan-Pooppally](https://github.com/Robin-Jimmichan-Pooppally)")
+    st.markdown(f"- LinkedIn: [Robin](https://{st.session_state.get('linkedin', 'www.linkedin.com/in/robin-jimmichan-pooppally-676061291')})")
+    st.markdown(f"- Email: <a href='mailto:rjimmichan@gmail.com' style='color:{ACCENT_COLOR}'>rjimmichan@gmail.com</a>", unsafe_allow_html=True)
 
-    except Exception as e:
-        st.session_state.thinking_active = False
-        error_msg = f"Connection Error: {str(e)}"
-        with placeholder.container():
-            st.error(f"🚨 Oops! I seem to have lost my connection. Please try again in a moment.")
-        st.session_state.api_error_count += 1
-        return None, error_msg
+    st.markdown("---")
+    st.markdown("### ⚙️ Settings")
+    # TTS toggle
+    if "tts_enabled" not in st.session_state:
+        st.session_state.tts_enabled = True  # default on for chat replies
+    st.session_state.tts_enabled = st.checkbox("Enable voice replies (TTS)", value=st.session_state.tts_enabled)
+    st.markdown("<div class='small-muted'>Voice replies will be generated using Google TTS (cached).</div>", unsafe_allow_html=True)
+    st.markdown("---")
+    st.markdown("### 📚 Projects")
+    if st.button("Show all repo links"):
+        for p in PROJECTS_INDEX:
+            st.markdown(f"- [{p['name']}]({p['repo']})  <span class='small-muted'>({p['category']})</span>", unsafe_allow_html=True)
+    st.markdown("---")
+    st.caption("Built with ❤️ • Dark-only theme • Legendary accent")
 
-# ==================== PROJECTS PARSER (from ROBIN_CONTEXT) ====================
-# ROBIN_CONTEXT is a large string. We'll parse project headings and READMEs from it.
-PROJECTS = {}
-
-def parse_projects_from_context(context_text: str):
-    # Heuristic: projects are listed under headers like '=== EXCEL PROJECTS (6) ===' or '=== POWER BI PROJECTS (5) ==='
-    # We parse blocks starting with project numbering like '1. **Project Name**'
-    projects = {}
-    lines = context_text.splitlines()
-    current = None
-    buffer = []
-    for line in lines:
-        m = re.match(r"^\d+\. \*\*(.+)\*\*", line.strip())
-        if m:
-            # store previous
-            if current:
-                projects[current] = "\n".join(buffer).strip()
-            current = m.group(1).strip()
-            buffer = []
-            # add the project title line also
-            buffer.append(line.strip())
-        else:
-            if current:
-                buffer.append(line)
-    # final flush
-    if current:
-        projects[current] = "\n".join(buffer).strip()
-    return projects
-
-PROJECTS = parse_projects_from_context(ROBIN_CONTEXT)
-
-# ==================== MAIN UI ====================
+# ----------------- Main header -----------------
 st.markdown(f"""
-<div class='header-card'>
-  <h1 style='color: {ACCENT}; margin:0;'>🤖 Robin's Portfoli-AI</h1>
-  <p style='color: #cfefff; margin:0.2rem 0 0;'>Ask about Robin's 21 Business Analytics Projects — Excel, SQL, Power BI, Python</p>
+<div style='display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;'>
+  <div>
+    <h1 style='margin:0;color:{ACCENT_COLOR};'>🤖 Robin's Portfoli-AI</h1>
+    <div class='small-muted'>Interactive guide to Robin's 21 end-to-end projects • Ask any project for code, steps, or results</div>
+  </div>
+  <div style='text-align:right'>
+    <div style='font-size:13px;color:#9aa3b2'>Welcome — {datetime.utcnow().strftime("%b %d, %Y • %H:%M UTC")}</div>
+    <div style='font-size:12px;color:#9aa3b2'>Voice replies: {'ON' if st.session_state.tts_enabled else 'OFF'}</div>
+  </div>
 </div>
 """, unsafe_allow_html=True)
 
-st.write(" ")
-col1, col2 = st.columns([3,1])
-with col2:
-    # Controls: mute toggle and TTS toggle
-    st.markdown("### Controls")
-    if st.button("🔊 Toggle TTS"):
-        st.session_state.tts_enabled = not st.session_state.tts_enabled
-    if st.button("🔇 Mute/Unmute"):
-        st.session_state.muted = not st.session_state.muted
-    st.write(f"TTS: {'On' if st.session_state.tts_enabled else 'Off'} — Muted: {'Yes' if st.session_state.muted else 'No'}")
-    st.markdown("---")
-    st.markdown("### Quick Links")
-    if st.button("Show Project List"):
-        with st.expander("All Projects (extracted from ROBIN_CONTEXT)"):
-            for i, k in enumerate(PROJECTS.keys(), start=1):
-                st.markdown(f"**{i}. {k}**")
+# ----------------- Global chat history state -----------------
+if "messages" not in st.session_state:
+    # default welcome messages
+    st.session_state.messages = [
+        {"role": "system", "content": ROBIN_CONTEXT},
+        {"role": "assistant", "content": "Hi — I am Robin's Portfoli-AI. Ask me anything about his 21 projects, steps, code, or results. Try: 'Show me the SQL queries used in the Telco Churn project'."}
+    ]
 
-with col1:
-    st.write("👋 Hi! I'm Robin's AI assistant. Ask me about his **21 projects** across **Excel, SQL, Power BI, and Python**!")
+# render chat history
+for msg in st.session_state.messages[1:]:
+    role = msg["role"]
+    avatar = "🤖" if role == "assistant" else "👤"
+    with st.chat_message(role, avatar=avatar):
+        st.markdown(msg["content"])
 
-# Display chat history
-for message in st.session_state.messages:
-    with st.chat_message(message["role"], avatar="🤖" if message["role"] == "assistant" else "👤"):
-        st.markdown(message["content"])
+# ----------------- Show Projects Section -----------------
+st.markdown("## 📂 Projects — browse and ask")
+cols = st.columns([1,1,1,1])
 
-# Chat input
-if prompt := st.chat_input("Ask about Robin's projects..."):
-    st.session_state.messages.append({"role": "user", "content": prompt})
+# display project cards grouped by index
+def _render_project_card(proj, col):
+    with col:
+        st.markdown(f"<div class='card'>", unsafe_allow_html=True)
+        st.markdown(f"<div style='display:flex;justify-content:space-between;align-items:center'>"
+                    f"<div><span class='badge'>{proj['category']}</span> <strong class='accent'>{proj['name']}</strong></div>"
+                    f"<div><span class='small-muted'>Updated: {proj.get('updated','2025')}</span></div>"
+                    f"</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='small-muted' style='margin-top:8px'>{proj.get('short','—')}</div>", unsafe_allow_html=True)
+        st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+        # action buttons
+        col1, col2, col3 = st.columns([1,1,1])
+        with col1:
+            if st.button("🔗 Open Repo", key=f"repo_{proj['id']}"):
+                st.experimental_set_query_params(open_repo=proj['repo'])
+                st.write(f"[Open repo]({proj['repo']})")
+        with col2:
+            if st.button("📖 Show README", key=f"readme_{proj['id']}"):
+                # If full readme text is in context, display; else show repo link
+                content = proj.get("readme_text")
+                if content:
+                    st.markdown("---")
+                    st.markdown(f"### README — {proj['name']}")
+                    st.markdown(content)
+                    if st.session_state.tts_enabled:
+                        audio_bytes = generate_tts_bytes(content)
+                        if audio_bytes:
+                            st.audio(audio_bytes, format="audio/mp3")
+                else:
+                    st.markdown(f"Open repo for README: [link]({proj['repo']})")
+        with col3:
+            if st.button("💬 Ask about this project", key=f"ask_{proj['id']}"):
+                # Pre-fill chat input with project-based question
+                prompt = f"Explain the '{proj['name']}' project end-to-end. Include dataset, steps, key queries/code, and business impact. Repo: {proj['repo']}"
+                st.session_state.messages.append({"role":"user","content":prompt})
+                st.experimental_rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+
+# render first 8 projects in grid
+for i, proj in enumerate(PROJECTS_INDEX[:8]):
+    _render_project_card(proj, cols[i % 4])
+
+st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
+
+# ----------------- Chat input -----------------
+user_input = st.chat_input("Ask about Robin's projects, code, DAX, SQL or steps...")
+if user_input:
+    # add to history and show
+    st.session_state.messages.append({"role":"user","content":user_input})
     with st.chat_message("user", avatar="👤"):
-        st.markdown(prompt)
-    response_placeholder = st.empty()
-    with st.chat_message("assistant", avatar="🤖"):
-        response_text, error = stream_llm_response(prompt, response_placeholder)
-        if response_text:
-            st.session_state.messages.append({
-                "role": "assistant",
-                "content": response_text
-            })
-            st.success("✅ Response complete!")
-            # TTS playback if enabled and not muted
-            if st.session_state.tts_enabled and not st.session_state.muted:
-                with st.spinner("🔊 Generating audio..."):
-                    audio = speak_response(response_text)
-                    if audio:
-                        st_audio_bytes(audio)
-        else:
-            if st.session_state.api_error_count > 2:
-                st.warning("💡 Multiple errors detected. Please refresh and try again.")
-            else:
-                st.info("Feel free to try asking again!")
+        st.markdown(user_input)
+    # Build minimal history for LLM (we include system context + last 6 messages)
+    recent = tuple((m["role"], m["content"]) for m in st.session_state.messages[-6:])
+    try:
+        with st.chat_message("assistant", avatar="🤖"):
+            placeholder = st.empty()
+            placeholder.markdown("Thinking...")
+            # call cached LLM
+            assistant_text = cached_llm_response(ROBIN_CONTEXT, recent)
+            placeholder.markdown(assistant_text)
+            st.session_state.messages.append({"role":"assistant","content":assistant_text})
+            # TTS playback
+            if st.session_state.tts_enabled:
+                audio_bytes = generate_tts_bytes(assistant_text)
+                if audio_bytes:
+                    st.audio(audio_bytes, format="audio/mp3")
+    except Exception as e:
+        st.error("AI request failed: " + str(e))
 
-# ==================== SIDEBAR ====================
-with st.sidebar:
-    st.markdown("### ⚙️ Settings")
-    st.checkbox("Enable Text-to-Speech for responses", value=st.session_state.tts_enabled, key="_tts_checkbox")
-    st.markdown("---")
-    st.markdown("### 📚 About")
-    st.write("Robin's Business Analytics portfolio with **21 real projects** across 10+ industries.")
-    st.markdown("### 📊 Project Breakdown")
-    col1s, col2s = st.columns(2)
-    with col1s:
-        st.metric("Excel", "6")
-        st.metric("Power BI", "5")
-    with col2s:
-        st.metric("SQL", "6")
-        st.metric("Python", "4")
-    st.markdown("---")
-    st.markdown("### 🔗 Quick Navigation")
-    # allow user to pick a project to view README
-    project_names = list(PROJECTS.keys())
-    selected = st.selectbox("Open project README", ["— select —"] + project_names)
-    if selected and selected != "— select —":
-        st.markdown(f"### {selected}")
-        st.code(PROJECTS[selected][:4000])  # show first chunk; README is large
-        if st.button("Show full README and code (open in new panel)"):
-            with st.expander(f"Full README — {selected}"):
-                st.markdown(PROJECTS[selected])
-                st.download_button("Download README as .md", PROJECTS[selected], file_name=f"{selected}.md")
-    st.markdown("---")
-    if st.button("🔄 Clear Chat"):
-        st.session_state.messages = []
-        st.experimental_rerun()
-    st.markdown("---")
-    st.caption("Built with ❤️ by Robin | Robin's Portfoli-AI")
-
-# Footer note
+# ----------------- Footer / complete project list -----------------
 st.markdown("---")
-st.write("Tip: Ask for specific project sections like 'DAX measures' or 'SQL queries' to see exact code snippets available in the README.")
+st.markdown("<div class='small-muted'>All project READMEs are sourced from Robin's verified GitHub repositories. The assistant uses the full project context to answer code & methodology questions.</div>", unsafe_allow_html=True)
+st.markdown("<div class='footer-note'>Tip: For exact SQL/DAX snippets, ask: 'Show me the SQL used in <project name>' or 'Show DAX measures for <Power BI project name>'.</div>", unsafe_allow_html=True)
 
-# End of app_fixed.py
+# ----------------- End -----------------
