@@ -22,7 +22,61 @@ from robi_context import context
 # Page config
 # -----------------------
 st.set_page_config(page_title="Portfoli-AI", page_icon="🤖", layout="wide")
-st.title("💙 Portfoli-AI — Robin Jimmichan's Portfolio Assistant")
+
+# --- Sticky Header ---
+st.markdown("""
+    <style>
+        .sticky-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #000000;
+            z-index: 9999;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid #00bfff33;
+        }
+        .header-title {
+            text-align: center;
+            font-size: 22px;
+            font-weight: 600;
+            color: #00bfff;
+            text-shadow: 0 0 12px #00bfff;
+        }
+        .clear-btn-container {
+            position: absolute;
+            top: 8px;
+            right: 20px;
+        }
+        .clear-btn {
+            background-color:#1e88e5;
+            border:none;
+            color:white;
+            padding:5px 10px;
+            border-radius:8px;
+            cursor:pointer;
+            font-weight:500;
+        }
+        .spacer {
+            height: 65px; /* keeps content from being hidden behind header */
+        }
+    </style>
+    <div class="sticky-header">
+        <div class="header-title">🤖 Portfoli-AI — Robin Jimmichan’s Portfolio Assistant</div>
+        <div class="clear-btn-container">
+            <form action="" method="get">
+                <button class="clear-btn" name="clear" type="submit">🧹 Clear Chat</button>
+            </form>
+        </div>
+    </div>
+    <div class="spacer"></div>
+""", unsafe_allow_html=True)
+
+# Clear Chat functionality
+if "clear" in st.query_params:
+    st.session_state["chat_history"] = []
+    st.session_state["history"] = []
+    st.rerun()
 
 # -----------------------
 # CSS (neon blue frosted glass)
@@ -143,7 +197,6 @@ st.markdown("---")
 mode = st.radio("Chat mode", ("General Assistant", "Business Analytics Assistant"), horizontal=True)
 # Persist mode
 if "chat_mode" not in st.session_state or st.session_state.get("chat_mode") != mode:
-    # When changing mode, reset chat history (per your preference)
     st.session_state.chat_mode = mode
     st.session_state.history = []  # reset conversation on mode change
 
@@ -168,7 +221,6 @@ client = init_groq()
 # Helpers: fetch README from GitHub
 # -----------------------
 def extract_owner_repo(repo_url):
-    # repo_url like https://github.com/owner/repo or raw variants
     parsed = urlparse(repo_url)
     parts = parsed.path.strip("/").split("/")
     if len(parts) >= 2:
@@ -179,7 +231,6 @@ def fetch_readme_lines(repo_url, max_lines=20):
     owner, repo = extract_owner_repo(repo_url)
     if not owner:
         return None, "Invalid repo URL"
-    # Try raw README from main, then master
     raw_main = f"https://raw.githubusercontent.com/{owner}/{repo}/main/README.md"
     raw_master = f"https://raw.githubusercontent.com/{owner}/{repo}/master/README.md"
     headers = {"Accept": "application/vnd.github.v3.raw"}
@@ -188,26 +239,11 @@ def fetch_readme_lines(repo_url, max_lines=20):
             r = requests.get(url, headers=headers, timeout=8)
             if r.status_code == 200 and r.text.strip():
                 lines = r.text.splitlines()
-                # Return first max_lines and full text
                 preview = "\n".join(lines[:max_lines])
                 full = r.text
                 return preview, full
         except Exception:
             continue
-    # If raw fetch failed, try GitHub API as fallback (may be rate-limited)
-    api_url = f"https://api.github.com/repos/{owner}/{repo}/readme"
-    try:
-        r = requests.get(api_url, headers=headers, timeout=8)
-        if r.status_code == 200:
-            obj = r.json()
-            import base64 as b64
-
-            content = b64.b64decode(obj.get("content", "")).decode("utf-8")
-            lines = content.splitlines()
-            preview = "\n".join(lines[:max_lines])
-            return preview, content
-    except Exception:
-        pass
     return None, None
 
 # -----------------------
@@ -241,18 +277,15 @@ if "show_more" not in st.session_state:
 # When project selection changes -> load README preview and reset chat for that project
 # -----------------------
 if project_choice and project_choice != "(none)":
-    # project_choice is like "Category — Name"
     cat, pname = project_choice.split(" — ", 1)
-    # find repo_url
     repo_url = None
     for c, name, r in all_projects:
         if c == cat and name == pname:
             repo_url = r
             break
-    # if selection changed, update state and reset chat
     if st.session_state.get("selected_project") != repo_url:
         st.session_state.selected_project = repo_url
-        st.session_state.history = []  # reset chat when switching project
+        st.session_state.history = []
         st.session_state.readme_preview, st.session_state.readme_full = fetch_readme_lines(repo_url, max_lines=20)
         st.session_state.show_more = False
 
@@ -261,7 +294,6 @@ if project_choice and project_choice != "(none)":
 # -----------------------
 if st.session_state.get("selected_project"):
     repo_url = st.session_state.selected_project
-    # Find category & name
     card_cat = card_name = None
     for c, name, r in all_projects:
         if r == repo_url:
@@ -283,7 +315,7 @@ if st.session_state.get("selected_project"):
                 st.code(st.session_state["readme_full"], language="markdown")
                 st.markdown("</details>", unsafe_allow_html=True)
     else:
-        st.info("No README found for this repository (or it could be in a subfolder).")
+        st.info("No README found for this repository.")
     st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("---")
@@ -321,20 +353,14 @@ def build_system_prompt(mode, selected_project_url):
 # Send question -> Groq
 # -----------------------
 if user_input:
-    # append user message
     st.session_state.history.append({"role": "user", "content": user_input})
-    # prepare messages for Groq: system + last 6 history
     system_prompt = build_system_prompt(st.session_state.chat_mode, st.session_state.get("selected_project"))
     messages = [{"role": "system", "content": system_prompt}]
-    # include last few entries as conversation
     for h in st.session_state.history[-8:]:
-        # convert to groq message roles: user/assistant
         role_map = "user" if h["role"] == "user" else "assistant"
         messages.append({"role": role_map, "content": h["content"]})
-    # call model
     with st.spinner("Thinking..."):
         try:
-            # Use recommended active model
             completion = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=messages,
@@ -344,19 +370,16 @@ if user_input:
             bot_text = completion.choices[0].message.content.strip()
         except Exception as e:
             bot_text = f"⚠️ Groq API error: {e}"
-    # append and display
     st.session_state.history.append({"role": "assistant", "content": bot_text})
     if tts_toggle:
-        # use TTS in try/except
         try:
             speak_text(bot_text)
         except Exception:
             st.warning("TTS failed for this response.")
-
-    # re-render (Streamlit will naturally display since we appended to history)
 
 # -----------------------
 # Footer / credits
 # -----------------------
 st.markdown("---")
 st.markdown("<div class='small-muted'>Built with ❤️ • Portfoli-AI • Contact: rjimmichan@gmail.com</div>", unsafe_allow_html=True)
+
