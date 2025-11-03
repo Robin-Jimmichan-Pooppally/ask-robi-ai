@@ -1,119 +1,92 @@
 import streamlit as st
-import os
-import random
-from groq import Groq
-import tempfile
-import pyttsx3
-from robi_context import ROBIN_CONTEXT, ROBIN_GREETING, PROJECTS as PROJECTS_INDEX, PROJECT_SUMMARY as PROJECTS_SUMMARY_TABLE
+from openai import OpenAI
+from robi_context import context
 
-# --- APP CONFIG ---
-st.set_page_config(page_title="Portfoli-AI | Robin Jimmichan", page_icon="🤖", layout="wide")
+# --------------------------
+# 🔧 APP CONFIGURATION
+# --------------------------
+st.set_page_config(page_title="Portfoli-AI | Robin Jimmichan", page_icon="🤖", layout="centered")
 
-# --- CUSTOM CSS ---
+# --------------------------
+# 🎨 CUSTOM CSS (Dark Frosted Glass UI)
+# --------------------------
 st.markdown("""
-<style>
-body {
-    background-color: #0E1117;
-    color: #FAFAFA;
-    font-family: 'Poppins', sans-serif;
-}
-h1, h2, h3, h4 {
-    color: #00C3FF;
-}
-.sidebar .sidebar-content {
-    background-color: #0E1117;
-}
-[data-testid="stChatMessage"] {
-    border-radius: 12px;
-    padding: 10px;
-}
-</style>
+    <style>
+    body {
+        background: radial-gradient(circle at top left, #0a0a0a, #111);
+        color: #eaeaea;
+    }
+    .stChatMessage {
+        background: rgba(25, 25, 25, 0.6);
+        backdrop-filter: blur(12px);
+        border-radius: 16px;
+        padding: 14px;
+        margin: 8px 0;
+        color: #fff;
+        animation: fadeIn 0.6s ease-in-out;
+    }
+    @keyframes fadeIn {
+        from {opacity: 0; transform: translateY(10px);}
+        to {opacity: 1; transform: translateY(0);}
+    }
+    .chat-bubble {
+        border-radius: 18px;
+        padding: 12px 16px;
+        background: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 0 10px rgba(0,255,255,0.2);
+    }
+    h1 {
+        text-align: center;
+        color: #00ffff;
+        text-shadow: 0 0 12px #00ffff;
+    }
+    </style>
 """, unsafe_allow_html=True)
 
-# --- HEADER ---
-st.title("🤖 Portfoli-AI | Robin Jimmichan’s Interactive Portfolio Assistant")
-st.caption("Ask me anything about Robin’s projects, dashboards, and skills.")
+# --------------------------
+# ⚙️ LOAD MODEL CLIENT
+# --------------------------
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-# --- PROJECTS SHOWCASE ---
-st.header("📁 Featured Projects")
-cols = st.columns(3)
+# --------------------------
+# 🚀 APP HEADER
+# --------------------------
+st.title("🤖 Portfoli-AI")
+st.caption(f"Meet {context['owner_name']}’s intelligent portfolio assistant")
 
-for i, proj in enumerate(PROJECTS_INDEX):
-    with cols[i % 3]:
-        st.markdown(f"### {proj['emoji']} {proj['id']}")
-        st.write(proj['desc'])
-        c1, c2 = st.columns([2, 1])
-        with c1:
-            if st.button("🔗 Open Repo", key=f"open_{proj['id']}"):
-                st.write(f"[Open repository]({proj['repo']})")
-        with c2:
-            st.caption(proj['type'])
-
-st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
-
-# --- CHAT INTERFACE SETUP ---
+# --------------------------
+# 💬 CHAT SETUP
+# --------------------------
 if "messages" not in st.session_state:
-    st.session_state.messages = [
-        {"role": "system", "content": ROBIN_CONTEXT},
-        {"role": "assistant", "content": ROBIN_GREETING}
-    ]
+    st.session_state["messages"] = []
+    # Auto-greet when app starts
+    st.session_state["messages"].append({"role": "assistant", "content": context["greeting_message"]})
 
-# --- TTS FUNCTION (CACHED) ---
-def speak_text_cached(text):
-    temp_path = os.path.join(tempfile.gettempdir(), f"tts_{random.randint(1, 9999)}.mp3")
-    engine = pyttsx3.init()
-    engine.save_to_file(text, temp_path)
-    engine.runAndWait()
-    return temp_path
-
-# --- DISPLAY CHAT HISTORY ---
-for msg in st.session_state.messages:
+for msg in st.session_state["messages"]:
     with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+        st.markdown(f"<div class='chat-bubble'>{msg['content']}</div>", unsafe_allow_html=True)
 
-# --- USER INPUT ---
-user_input = st.chat_input("Type your question about Robin’s portfolio...")
+# --------------------------
+# ✏️ USER INPUT
+# --------------------------
+prompt = st.chat_input("Ask about Robin’s projects...")
 
-if user_input:
-    # Add user message
-    st.session_state.messages.append({"role": "user", "content": user_input})
+if prompt:
+    st.session_state["messages"].append({"role": "user", "content": prompt})
     with st.chat_message("user"):
-        st.markdown(user_input)
+        st.markdown(f"<div class='chat-bubble'>{prompt}</div>", unsafe_allow_html=True)
 
-    # --- AI RESPONSE LOGIC ---
-    groq_api_key = os.getenv("GROQ_API_KEY")
-    if groq_api_key:
-        client = Groq(api_key=groq_api_key)
-        try:
-            response = client.chat.completions.create(
-                model="mixtral-8x7b-32768",
-                messages=st.session_state.messages,
-                temperature=0.7,
-                max_tokens=800,
-                top_p=1
-            )
-            reply = response.choices[0].message.content
-        except Exception as e:
-            reply = f"⚠️ Groq API error: {e}"
-    else:
-        reply = "👋 Hey there! I can’t reach Groq servers right now, but here’s a summary: this chatbot helps you explore Robin’s analytics projects, dashboards, and code samples interactively."
+    # Build the full prompt for the model
+    full_prompt = f"{context['persona']}\n\nUser question: {prompt}\n\nUse only verified info from context below:\n{context}"
 
-    # Display assistant message
     with st.chat_message("assistant"):
-        st.markdown(reply)
-        st.audio(speak_text_cached(reply))
+        with st.spinner("Analyzing Robin’s portfolio..."):
+            response = client.chat.completions.create(
+                model="gpt-5",
+                messages=[{"role": "system", "content": full_prompt}],
+                temperature=0.2
+            )
+            answer = response.choices[0].message.content
+            st.markdown(f"<div class='chat-bubble'>{answer}</div>", unsafe_allow_html=True)
 
-    # Store message
-    st.session_state.messages.append({"role": "assistant", "content": reply})
-
-# --- SIDEBAR ---
-with st.sidebar:
-    st.image("https://avatars.githubusercontent.com/u/150340474?v=4", width=140)
-    st.markdown("### 🧠 About Robin Jimmichan")
-    st.write("Business Analyst | Data Enthusiast | Excel • SQL • Power BI • Python")
-    st.write("Building insights from data and automating smarter solutions.")
-    st.markdown("---")
-    st.subheader("🗂️ Project Summary")
-    st.dataframe(PROJECTS_SUMMARY_TABLE, use_container_width=True)
-    st.markdown("---")
-    st.caption("Built with ❤️ using Streamlit + Groq API + Portfoli-AI Context Engine.")
+    st.session_state["messages"].append({"role": "assistant", "content": answer})
