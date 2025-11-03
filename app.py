@@ -417,11 +417,18 @@ def init_groq():
         st.error("Missing Groq API key. Add GROQ_API_KEY to Streamlit secrets.")
         st.stop()
     try:
+        # ✅ Updated to new Groq client syntax
+        from groq import Groq
         client = Groq(api_key=api_key)
         return client
+    except TypeError as e:
+        # fallback if SDK version mismatch
+        st.error(f"Groq initialization error — please upgrade the SDK with: pip install -U groq\n\nDetails: {e}")
+        st.stop()
     except Exception as e:
         st.error(f"Failed to initialize Groq client: {e}")
         st.stop()
+
 
 client = init_groq()
 
