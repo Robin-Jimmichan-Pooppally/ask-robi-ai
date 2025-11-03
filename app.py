@@ -72,13 +72,6 @@ st.markdown("""
     <div class="spacer"></div>
 """, unsafe_allow_html=True)
 
-# Clear Chat functionality
-if "clear" in st.query_params:
-    st.session_state["chat_history"] = []
-    st.session_state["history"] = []
-    st.session_state["greeted"] = False
-    st.rerun()
-
 # -----------------------
 # Greeting message
 # -----------------------
