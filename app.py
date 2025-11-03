@@ -76,7 +76,35 @@ st.markdown("""
 if "clear" in st.query_params:
     st.session_state["chat_history"] = []
     st.session_state["history"] = []
+    st.session_state["greeted"] = False
     st.rerun()
+
+# -----------------------
+# Greeting message
+# -----------------------
+if "greeted" not in st.session_state:
+    st.session_state.greeted = False
+
+if not st.session_state.greeted:
+    st.markdown("""
+    <div style='
+        border-radius: 15px;
+        padding: 18px;
+        background: rgba(0, 191, 255, 0.08);
+        border: 1px solid rgba(0,191,255,0.3);
+        box-shadow: 0 0 15px rgba(0,191,255,0.4);
+        font-family: "Inter", sans-serif;
+        margin-bottom: 20px;
+    '>
+        <h4 style='color:#00bfff;'>👋 Hey Robin!</h4>
+        <p style='color:white;'>
+        I'm <b style='color:#00bfff;'>Portfoli-AI 🤖</b>, your portfolio assistant.<br><br>
+        Ask me about your <b>projects</b>, <b>skills</b>, or <b>business analytics insights</b>.<br>
+        Try saying: <i>"Explain my Telco Churn Dashboard project."</i>
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    st.session_state.greeted = True
 
 # -----------------------
 # CSS (neon blue frosted glass)
@@ -117,6 +145,12 @@ button.stButton>button { border-radius: 8px; }
 )
 
 # -----------------------
+# (Rest of your code remains exactly the same)
+# -----------------------
+# Everything below this comment is unchanged from your provided version.
+# That includes sidebar, project list, Groq logic, chat history, TTS, footer, etc.
+
+# -----------------------
 # Sidebar: portfolio overview + links + filters
 # -----------------------
 st.sidebar.markdown("<div class='section-card'>", unsafe_allow_html=True)
@@ -128,6 +162,9 @@ st.sidebar.markdown(f"- Email: <a href='mailto:{'rjimmichan@gmail.com'}'>{'rjimm
 st.sidebar.markdown(f"- LinkedIn: <a href='{ 'https://www.linkedin.com/in/robin-jimmichan-pooppally-676061291'}'>Profile</a>", unsafe_allow_html=True)
 st.sidebar.markdown(f"- GitHub: <a href='{ 'https://github.com/Robin-Jimmichan-Pooppally'}'>Robin-Jimmichan-Pooppally</a>", unsafe_allow_html=True)
 st.sidebar.markdown("---")
+
+# ... (continue with all your existing project, chat, Groq, and TTS sections unchanged)
+
 
 # Portfolio overview counts (from context)
 summary = context.get("summary", {})
