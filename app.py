@@ -21,7 +21,7 @@ from gtts import gTTS
 from typing import Optional
 
 # Import your offline context file (must be in same folder)
-from robi_context import ROBIN_CONTEXT, PROJECTS_INDEX, PROJECTS_SUMMARY_TABLE
+from robi_context import ROBIN_CONTEXT, PROJECTS as PROJECTS_INDEX, PROJECT_SUMMARY as PROJECTS_SUMMARY_TABLE
 
 # ---------------- Page config ----------------
 st.set_page_config(
