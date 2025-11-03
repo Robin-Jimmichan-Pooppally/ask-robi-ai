@@ -1,3 +1,63 @@
+import streamlit as st
+
+# --- Streamlit page config ---
+st.set_page_config(
+    page_title="AI Voice Assistant",
+    page_icon="🎧",
+    layout="centered",
+    initial_sidebar_state="collapsed"
+)
+
+# --- Custom CSS for Dark + Neon Blue theme ---
+st.markdown("""
+    <style>
+    /* Background */
+    .stApp {
+        background-color: #0E1117;
+        color: #EAEAEA;
+        font-family: 'Poppins', sans-serif;
+    }
+
+    /* Headers */
+    h1, h2, h3, h4, h5 {
+        color: #00FFFF !important;
+        text-shadow: 0 0 12px rgba(0, 255, 255, 0.7);
+    }
+
+    /* Buttons */
+    div.stButton > button {
+        background-color: transparent;
+        color: #00FFFF;
+        border: 1px solid #00FFFF;
+        border-radius: 8px;
+        padding: 0.5rem 1.2rem;
+        transition: all 0.3s ease-in-out;
+    }
+
+    div.stButton > button:hover {
+        background-color: #00FFFF;
+        color: #0E1117;
+        box-shadow: 0 0 20px #00FFFF;
+    }
+
+    /* Text Inputs */
+    input, textarea {
+        background-color: #1A1D24 !important;
+        color: #EAEAEA !important;
+        border: 1px solid #00FFFF !important;
+        border-radius: 6px !important;
+    }
+
+    /* Audio player */
+    audio {
+        filter: drop-shadow(0 0 8px #00FFFF);
+    }
+
+    /* Hide Streamlit footer */
+    footer {visibility: hidden;}
+    </style>
+""", unsafe_allow_html=True)
+
 # app_fixed.py
 """
 Robin's Portfoli-AI - improved Streamlit app (dark-only theme)
