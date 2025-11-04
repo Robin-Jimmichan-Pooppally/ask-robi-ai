@@ -1,6 +1,6 @@
 # ===========================
 # 🤖 ROBI CONTEXT FILE
-# Version: Final (v1.0)
+# Version: Final (v2.0)
 # Author: Robin Jimmichan Pooppally
 # Purpose: Central knowledge base for the Portfoli-AI chatbot
 # ===========================
@@ -17,7 +17,7 @@ context = {
         "If information is missing, politely say 'That specific detail isn't available right now in Robin's repository.' "
         "Keep replies professional, warm, and insight-driven."
     ),
-    
+
     # --------------------------
     # 🟢 GREETING MESSAGE
     # --------------------------
@@ -34,7 +34,7 @@ context = {
         "👉 *'Explain how customer churn rate was calculated in the Excel project.'*\n\n"
         "Let's begin exploring Robin's analytics portfolio!"
     ),
-    
+
     # --------------------------
     # 🧩 PROJECT DIRECTORY
     # --------------------------
@@ -69,7 +69,7 @@ context = {
             "Loan Default Prediction": "https://github.com/Robin-Jimmichan-Pooppally/Loan-Default-Prediction-SQL-Project"
         }
     },
-    
+
     # --------------------------
     # 📚 PROJECT SUMMARY TABLE
     # --------------------------
@@ -80,7 +80,7 @@ context = {
         "SQL Projects": 6,
         "Total Projects": 21
     },
-    
+
     # --------------------------
     # 💬 SAMPLE QUESTIONS
     # --------------------------
@@ -89,6 +89,52 @@ context = {
         "Show the Power BI DAX formulas for the E-commerce Funnel project.",
         "Explain the SQL logic behind the Loan Default Prediction project.",
         "What insights were drawn from the HR Analytics Excel project?",
-        "How was customer segmentation performed in the Retail Python project?",
-    ]
+        "How was customer segmentation performed in the Retail Python project?"
+    ],
+
+    # --------------------------
+    # 🧠 CUSTOM RESPONSES
+    # --------------------------
+    "custom_responses": {
+        "project_count": (
+            "📊 Robin Jimmichan Pooppally has completed a total of **21 verified Business Analytics projects**, "
+            "spanning across four key skill areas:\n\n"
+            "- **6 Excel Projects**\n"
+            "- **5 Power BI Projects**\n"
+            "- **4 Python Projects**\n"
+            "- **6 SQL Projects**\n\n"
+            "You can explore each project category in detail by asking things like:\n"
+            "👉 *'Show me all Power BI projects'* or *'List Excel projects by Robin.'*"
+        ),
+        "project_list": (
+            "Here’s the full list of Robin’s **21 Business Analytics projects**, categorized by tool:\n\n"
+            "**🧮 Excel Projects (6):**\n"
+            "• Telco Customer Churn Analysis\n"
+            "• Sales Performance Analysis\n"
+            "• Marketing Campaign Analysis\n"
+            "• HR Analytics Dashboard\n"
+            "• E-commerce Sales Analysis\n"
+            "• Bank Customer Analysis\n\n"
+            "**📊 Power BI Projects (5):**\n"
+            "• E-commerce Funnel Analysis\n"
+            "• Customer 360 Dashboard\n"
+            "• Retail Sales Dashboard\n"
+            "• Telco Customer Churn Dashboard\n"
+            "• Financial Performance Dashboard\n\n"
+            "**🐍 Python Projects (4):**\n"
+            "• Retail Customer Segmentation\n"
+            "• Healthcare Patient Analytics\n"
+            "• Airbnb NYC Price Analysis\n"
+            "• Sales Forecasting Time Series\n\n"
+            "**🧠 SQL Projects (6):**\n"
+            "• Healthcare Claims Analysis\n"
+            "• Bank Customer Segmentation\n"
+            "• Telco Churn Analysis\n"
+            "• Inventory Supplier Analysis\n"
+            "• Hospital Patient Analysis\n"
+            "• Loan Default Prediction\n\n"
+            "You can ask me about any project — for example:\n"
+            "👉 *'Open the Retail Sales Dashboard Power BI project'* or *'Explain insights from the HR Analytics Excel project.'*"
+        )
+    }
 }
