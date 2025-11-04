@@ -13,7 +13,6 @@ from io import BytesIO
 import requests
 import json
 import os
-import textwrap
 import re
 from urllib.parse import urlparse
 
@@ -80,7 +79,7 @@ if "code_blocks" not in st.session_state: st.session_state.code_blocks = []
 # -----------------------
 # Colors & links (user-provided)
 # -----------------------
-ACCENT = "#00bfff"  # electric blue
+ACCENT = "#00bfff"  # electric blue - unified accent
 GITHUB_URL = "https://github.com/Robin-Jimmichan-Pooppally"
 LINKEDIN_URL = "https://www.linkedin.com/in/robin-jimmichan-pooppally-676061291"
 EMAIL = "rjimmichan@gmail.com"
@@ -324,9 +323,10 @@ for k, v in summary.items():
     st.sidebar.markdown(f"- **{k}**: {v}")
 st.sidebar.markdown("</div>", unsafe_allow_html=True)
 
-# Contact section (stacked) with glowing social icons ONLY (no repeated labels)
+# Contact section (stacked) with glowing social icons ONLY (no repeated textual labels)
 st.sidebar.markdown("<div class='section-card'>", unsafe_allow_html=True)
 st.sidebar.markdown("### 📬 Contact")
+
 # Inline SVG icons (stroke-based) — public/open-line style, will be tinted via CSS
 github_svg = """<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.66.5 12.02c0 5.09 3.29 9.4 7.86 10.93.58.11.79-.25.79-.55 0-.27-.01-1.18-.02-2.14-3.2.69-3.88-1.54-3.88-1.54-.53-1.35-1.3-1.71-1.3-1.71-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.78 2.73 1.27 3.4.97.11-.75.41-1.27.75-1.56-2.56-.29-5.26-1.28-5.26-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.47.11-3.06 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.79 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.6.23 2.78.11 3.06.74.81 1.19 1.85 1.19 3.1 0 4.42-2.71 5.39-5.29 5.67.42.36.79 1.07.79 2.16 0 1.56-.01 2.83-.01 3.22 0 .3.21.67.8.56A11.53 11.53 0 0 0 23.5 12.02C23.5 5.66 18.35.5 12 .5z"/></svg>"""
 linkedin_svg = """<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4.98 3.5C3.88 3.5 3 4.38 3 5.48c0 1.1.88 1.98 1.98 1.98 1.1 0 1.98-.88 1.98-1.98C6.96 4.38 6.08 3.5 4.98 3.5zM3.5 8.98h3v11.5h-3v-11.5zM9.5 8.98h2.88v1.58h.04c.4-.76 1.38-1.56 2.85-1.56 3.05 0 3.61 2.01 3.61 4.63v6.85h-3v-6.08c0-1.45-.03-3.33-2.03-3.33-2.03 0-2.34 1.58-2.34 3.21v6.2h-3v-11.5z"/></svg>"""
@@ -335,9 +335,9 @@ mail_svg = """<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-h
 st.sidebar.markdown(
     f"""
     <div class="social-row" aria-hidden="false">
-      <a class="social-btn" href="{GITHUB_URL}" target="_blank" title="GitHub">{github_svg}</a>
-      <a class="social-btn" href="{LINKEDIN_URL}" target="_blank" title="LinkedIn">{linkedin_svg}</a>
-      <a class="social-btn" href="mailto:{EMAIL}" title="Email">{mail_svg}</a>
+      <a class="social-btn" href="{GITHUB_URL}" target="_blank" title="GitHub" aria-label="GitHub">{github_svg}</a>
+      <a class="social-btn" href="{LINKEDIN_URL}" target="_blank" title="LinkedIn" aria-label="LinkedIn">{linkedin_svg}</a>
+      <a class="social-btn" href="mailto:{EMAIL}" title="Email" aria-label="Email">{mail_svg}</a>
     </div>
     """,
     unsafe_allow_html=True,
@@ -406,11 +406,22 @@ def init_groq():
         st.error("Missing Groq API key. Add GROQ_API_KEY to Streamlit secrets.")
         st.stop()
     try:
+        # Primary initialization
         client = Groq(api_key=api_key)
         return client
+    except TypeError as te:
+        # Some Groq SDK versions may require different init signature.
+        st.warning(f"Groq client init TypeError: {te}. Attempting fallback init.")
+        try:
+            client = Groq(api_key=api_key)  # attempt again (keeps behavior predictable)
+            return client
+        except Exception as e:
+            st.error(f"Failed to initialize Groq client: {e}")
+            st.stop()
     except Exception as e:
         st.error(f"Failed to initialize Groq client: {e}")
         st.stop()
+
 client = init_groq()
 
 # -----------------------
@@ -466,7 +477,7 @@ def extract_code_blocks_from_readme(readme_text):
     return blocks
 
 # -----------------------
-# TTS helper (unchanged)
+# TTS helper (unchanged but guarded)
 # -----------------------
 def speak_text(text):
     try:
@@ -474,6 +485,7 @@ def speak_text(text):
         buf = BytesIO(); tts.write_to_fp(buf); buf.seek(0)
         st.audio(buf.read(), format="audio/mp3")
     except Exception as e:
+        # Do not crash app if TTS fails
         st.warning("TTS unavailable: " + str(e))
 
 # -----------------------
