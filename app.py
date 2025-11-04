@@ -1,3 +1,4 @@
+# app.py
 """
 Portfoli-AI — Streamlit app (Groq + neon frosted UI + GitHub README preview + gTTS)
 Requirements: see requirements.txt provided below
@@ -76,28 +77,39 @@ if "awaiting_clear" not in st.session_state: st.session_state.awaiting_clear = F
 # code blocks parsed from README
 if "code_blocks" not in st.session_state: st.session_state.code_blocks = []
 
+# -----------------------
+# Colors & links (user-provided)
+# -----------------------
+ACCENT = "#00bfff"  # electric blue
+GITHUB_URL = "https://github.com/Robin-Jimmichan-Pooppally"
+LINKEDIN_URL = "https://www.linkedin.com/in/robin-jimmichan-pooppally-676061291"
+EMAIL = "rjimmichan@gmail.com"
+# fallback logo (repo), can be updated if you provide a different image
+logo_url = "https://raw.githubusercontent.com/Robin-Jimmichan-Pooppally/Portfoli-AI/main/logo.png"
+
 # --- Sticky Header ---
-st.markdown("""
+st.markdown(f"""
     <style>
-        .sticky-header {
+        .sticky-header {{
             position: fixed; top: 0; left: 0; width: 100%;
             background-color: #000; z-index: 9999; padding: 0.6rem 0;
-            border-bottom: 1px solid #00bfff33;
-        }
-        .header-title {
+            border-bottom: 1px solid {ACCENT}33;
+        }}
+        .header-title {{
             text-align: center; font-size: 22px; font-weight: 600;
-            color: #00bfff; text-shadow: 0 0 12px #00bfff;
-        }
-        .clear-btn-container {
+            color: {ACCENT}; text-shadow: 0 0 12px {ACCENT};
+        }}
+        .clear-btn-container {{
             position: absolute; top: 8px; right: 20px;
-        }
-        .clear-btn {
-            background-color:#1e88e5; border:none; color:white;
-            padding:5px 10px; border-radius:8px; cursor:pointer; font-weight:500;
-            transition: all 0.2s ease-in-out;
-        }
-        .clear-btn:hover { transform: scale(1.05); box-shadow: 0 0 10px rgba(0,191,255,0.4); }
-        .spacer { height: 65px; }
+        }}
+        .clear-btn {{
+            background-color:{ACCENT}; border:none; color:white;
+            padding:6px 12px; border-radius:10px; cursor:pointer; font-weight:600;
+            transition: all 0.18s ease-in-out;
+            box-shadow: 0 6px 20px {ACCENT}33, inset 0 -2px 6px rgba(0,0,0,0.35);
+        }}
+        .clear-btn:hover {{ transform: scale(1.04); box-shadow: 0 8px 28px {ACCENT}44; }}
+        .spacer {{ height: 68px; }}
     </style>
     <div class="sticky-header">
         <div class="header-title">🤖 Portfoli-AI — Robin Jimmichan Pooppally's Portfolio Assistant</div>
@@ -117,12 +129,12 @@ if "greeted" not in st.session_state:
     st.session_state.greeted = False
 
 if not st.session_state.greeted:
-    st.markdown("""
-    <div style='border-radius:15px;padding:18px;background:rgba(0,191,255,0.08);
-    border:1px solid rgba(0,191,255,0.3);box-shadow:0 0 15px rgba(0,191,255,0.4);
+    st.markdown(f"""
+    <div style='border-radius:15px;padding:18px;background:rgba(0,191,255,0.06);
+    border:1px solid {ACCENT}33;box-shadow:0 0 18px {ACCENT}22;
     font-family:"Inter",sans-serif;margin-bottom:20px;'>
-        <h4 style='color:#00bfff;'>👋 Hey! I’m Portfoli-AI 🤖, your portfolio assistant for Robin’s projects.</h4>
-        <p style='color:white;'>
+        <h4 style='color:{ACCENT};margin:0 0 8px 0;'>👋 Hey! I’m Portfoli-AI 🤖, your portfolio assistant for Robin’s projects.</h4>
+        <p style='color:#e8f7ff;margin:0;'>
         Ask me about Robin’s projects, skills, or Business Analytics insights.<br>
         Try saying: “Explain my Telco Churn Dashboard project.”
         </p>
@@ -133,116 +145,136 @@ if not st.session_state.greeted:
 # -----------------------
 # Global CSS (neon + accessibility + selectbox/focus tweak + code bubble + color system fixes)
 # -----------------------
-st.markdown("""
+st.markdown(f"""
 <style>
-body { background:#000; color:#e8f7ff; font-size:16px; line-height:1.6; scroll-behavior:smooth; }
-h1,h2,h3 { color:#00bfff; text-shadow:0 0 12px #00bfff; }
+/* General */
+body {{ background:#000; color:#e8f7ff; font-size:16px; line-height:1.6; scroll-behavior:smooth; }}
+h1,h2,h3 {{ color:{ACCENT}; text-shadow:0 0 12px {ACCENT}; }}
 
 /* Cards and bubbles */
-.section-card {
+.section-card {{
   background: rgba(10,12,18,0.6);
   border-radius: 14px; padding: 14px;
-  border: 1px solid rgba(0,191,255,0.18);
-  box-shadow: 0 6px 26px rgba(0,191,255,0.06);
-}
-.chat-bubble-user, .chat-bubble-bot {
+  border: 1px solid {ACCENT}2e;
+  box-shadow: 0 6px 26px {ACCENT}10;
+}}
+.chat-bubble-user, .chat-bubble-bot {{
   padding:10px 14px; border-radius:12px; margin:8px 0;
-  transition: background 0.3s ease, transform 0.2s ease;
-}
-.chat-bubble-user:hover, .chat-bubble-bot:hover { transform: scale(1.02); }
-.chat-bubble-user {
-  background: rgba(0,191,255,0.12); border: 1px solid rgba(0,191,255,0.25); color:#cffcff;
-}
-.chat-bubble-bot {
-  background: rgba(255,255,255,0.04); border: 1px solid rgba(0,191,255,0.12); color:#e8f7ff;
-}
+  transition: background 0.22s ease, transform 0.18s ease;
+}}
+.chat-bubble-user:hover, .chat-bubble-bot:hover {{ transform: scale(1.02); }}
+.chat-bubble-user {{
+  background: rgba(0,191,255,0.10); border: 1px solid {ACCENT}33; color:#cffcff;
+  box-shadow: 0 4px 18px {ACCENT}10;
+}}
+.chat-bubble-bot {{
+  background: rgba(255,255,255,0.03); border: 1px solid {ACCENT}22; color:#e8f7ff;
+}}
 
-/* Buttons and hover glow: ensure category buttons glow blue #00bfff */
-button.stButton>button {
-  border-radius:8px; transition: all 0.2s ease-in-out;
-}
-button.stButton>button:hover {
-  transform: scale(1.03);
-  box-shadow: 0 0 10px rgba(0,191,255,0.4);
-}
+/* Buttons and hover glow: ensure category buttons glow blue {ACCENT} */
+button.stButton>button {{
+  border-radius:10px; transition: all 0.18s ease-in-out;
+  border: 1px solid {ACCENT}22;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00));
+}}
+button.stButton>button:hover {{
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px {ACCENT}22;
+  border-color: {ACCENT};
+}}
+
 /* Category button hover tune (chatbot blue) */
-.stButton > button:hover, button.stButton>button:hover { outline: 0; box-shadow: 0 0 18px rgba(0,191,255,0.12); border-color: #00bfff; }
+.stButton > button:hover, button.stButton>button:hover {{ outline: 0; box-shadow: 0 0 18px {ACCENT}22; border-color: {ACCENT}; }}
 
 /* Selectbox focus / active uses chatbot blue */
-.stSelectbox [data-baseweb="select"], select, .stSelectbox select {
-  border-color: #00bfff !important; box-shadow: 0 0 14px rgba(0,191,255,0.08) !important;
-  accent-color: #00bfff;
-}
+.stSelectbox [data-baseweb="select"], select, .stSelectbox select {{
+  border-color: {ACCENT} !important; box-shadow: 0 0 14px {ACCENT}15 !important;
+  accent-color: {ACCENT};
+}}
 
 /* Radio / checkbox / form accent color */
-input[type="radio"], input[type="checkbox"], select {
-  accent-color: #00bfff;
-}
+input[type="radio"], input[type="checkbox"], select {{
+  accent-color: {ACCENT};
+}}
 
 /* Selected project label inline display color */
-.selected-project-label { color: #00bfff; font-weight:700; }
+.selected-project-label {{ color: {ACCENT}; font-weight:700; }}
 
 /* Styled code bubble for README snippets (neon-blue accent) */
-.code-bubble {
+.code-bubble {{
   background: rgba(3,8,15,0.9);
-  border-left: 3px solid #00bfff;
+  border-left: 3px solid {ACCENT};
   padding: 10px;
   margin: 8px 0;
   border-radius: 8px;
   font-family: monospace;
   white-space: pre-wrap;
   overflow-x: auto;
-}
+}}
 
 /* small muted text */
-.small-muted { color:#98cfe6; font-size:12px; }
+.small-muted {{ color:#98cfe6; font-size:12px; }}
 
 /* Dropdown arrow and icons (if inside select) forced to blue tint when possible */
-.stSelectbox svg, .stSelectbox .css-1avcm0n svg {
-  color: #00bfff !important;
-  fill: #00bfff !important;
-}
+.stSelectbox svg, .stSelectbox .css-1avcm0n svg {{
+  color: {ACCENT} !important;
+  fill: {ACCENT} !important;
+}}
 
 /* Chat mode radio active/selected visual - try to ensure blue highlight */
-[data-testid="stRadio"] .row-widget.stRadio .stRadio > div[role="radiogroup"] label {
+[data-testid="stRadio"] .row-widget.stRadio .stRadio > div[role="radiogroup"] label {{
   color: #e8f7ff;
-}
-[data-testid="stRadio"] input:checked + label, input[type="radio"]:checked + label {
-  color: #00bfff !important;
-}
+}}
+[data-testid="stRadio"] input:checked + label, input[type="radio"]:checked + label {{
+  color: {ACCENT} !important;
+}}
 
 /* Make sure option:checked shows blue in supporting browsers */
-option:checked { background: rgba(0,191,255,0.06); color: #00bfff; }
+option:checked {{ background: rgba(0,191,255,0.06); color: {ACCENT}; }}
 
-/* Make category button items (the custom columns buttons) more visibly blue on hover */
-.columns-block button:hover { box-shadow: 0 0 18px rgba(0,191,255,0.16); border-color: #00bfff; }
+/* Social icon buttons in sidebar */
+.social-row {{
+  display:flex; gap:8px; align-items:center; margin-top:8px;
+}}
+.social-btn {{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:34px; height:34px; border-radius:999px;
+  border:1px solid {ACCENT}33; background: rgba(255,255,255,0.015);
+  box-shadow: 0 6px 18px {ACCENT}0f; transition: all .18s ease-in-out;
+}}
+.social-btn:hover {{
+  transform: translateY(-3px);
+  box-shadow: 0 10px 32px {ACCENT}22;
+  border-color: {ACCENT};
+}}
+.social-btn img {{ width:18px; height:18px; filter: invert(100%) sepia(0%) saturate(0%) hue-rotate(180deg) brightness(120%); }}
 
 /* Small responsive tune */
-@media (max-width: 600px) {
-  .header-title { font-size: 18px; }
-}
+@media (max-width: 600px) {{
+  .header-title {{ font-size: 18px; }}
+}}
 </style>
 """, unsafe_allow_html=True)
-
-# Optional high-contrast mode (sidebar toggle)
-if st.sidebar.toggle("♿ High Contrast Mode"):
-    st.markdown("<style>body{filter:contrast(1.25);}</style>", unsafe_allow_html=True)
-
 
 # -----------------------
 # Sidebar top header (moved to top) + Controls → Portfolio → Contact (reordered)
 # -----------------------
-st.sidebar.markdown("<div class='section-card' style='display:flex;align-items:center;gap:10px;'>", unsafe_allow_html=True)
-# circular logo (user-supplied)
-logo_url = "https://raw.githubusercontent.com/Robin-Jimmichan-Pooppally/Portfoli-AI/main/logo.png"
-st.sidebar.markdown(f"""
-    <div style='display:flex;align-items:center;gap:10px;'>
-        <img src="{logo_url}" alt="logo" style="width:44px;height:44px;border-radius:999px;border:2px solid #00bfff;object-fit:cover;">
-        <div style='line-height:1;'>
-            <div style='font-weight:700;color:#00bfff;'>🤖 Built by Robin Jimmichan P</div>
-        </div>
+st.sidebar.markdown("<div class='section-card' style='display:flex;align-items:center;gap:12px;'>", unsafe_allow_html=True)
+
+# Show circular logo (use fallback if image missing)
+# We'll render an <img> tag; if image doesn't exist the alt text shows.
+st.sidebar.markdown(
+    f"""
+    <div style='display:flex;align-items:center;gap:12px;'>
+      <img src="{logo_url}" alt="logo" style="width:48px;height:48px;border-radius:999px;border:2px solid {ACCENT};object-fit:cover;">
+      <div style='line-height:1;'>
+        <div style='font-weight:700;color:{ACCENT};'>🤖 Built by Robin Jimmichan P</div>
+        <div style='font-size:12px;color:#bfefff;margin-top:2px;'>Portfolio Assistant</div>
+      </div>
     </div>
-""", unsafe_allow_html=True)
+    """,
+    unsafe_allow_html=True,
+)
 st.sidebar.markdown("</div>", unsafe_allow_html=True)
 
 # Controls section (stacked)
@@ -281,12 +313,33 @@ for k, v in summary.items():
     st.sidebar.markdown(f"- **{k}**: {v}")
 st.sidebar.markdown("</div>", unsafe_allow_html=True)
 
-# Contact section (stacked)
+# Contact section (stacked) with glowing social icons
 st.sidebar.markdown("<div class='section-card'>", unsafe_allow_html=True)
 st.sidebar.markdown("### 📬 Contact")
-st.sidebar.markdown(f"- Email: <a href='mailto:rjimmichan@gmail.com'>rjimmichan@gmail.com</a>", unsafe_allow_html=True)
-st.sidebar.markdown(f"- LinkedIn: <a href='https://www.linkedin.com/in/robin-jimmichan-pooppally-676061291'>Profile</a>", unsafe_allow_html=True)
-st.sidebar.markdown(f"- GitHub: <a href='https://github.com/Robin-Jimmichan-Pooppally'>Robin-Jimmichan-Pooppally</a>", unsafe_allow_html=True)
+
+# Social icon row (GitHub, LinkedIn, Email)
+# Using inline icon images (small) — SVG data URLs or external raw icons could be used.
+# We'll use simple inline SVG icons to keep everything self contained and neon-styled.
+github_svg = """<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='18' height='18'><path fill='currentColor' d='M12 .5C5.65.5.5 5.66.5 12.02c0 5.09 3.29 9.4 7.86 10.93.58.11.79-.25.79-.55 0-.27-.01-1.18-.02-2.14-3.2.69-3.88-1.54-3.88-1.54-.53-1.35-1.3-1.71-1.3-1.71-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.78 2.73 1.27 3.4.97.11-.75.41-1.27.75-1.56-2.56-.29-5.26-1.28-5.26-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.47.11-3.06 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.79 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.6.23 2.78.11 3.06.74.81 1.19 1.85 1.19 3.1 0 4.42-2.71 5.39-5.29 5.67.42.36.79 1.07.79 2.16 0 1.56-.01 2.83-.01 3.22 0 .3.21.67.8.56A11.53 11.53 0 0 0 23.5 12.02C23.5 5.66 18.35.5 12 .5z'/></svg>"""
+linkedin_svg = """<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='18' height='18'><path fill='currentColor' d='M4.98 3.5C3.88 3.5 3 4.38 3 5.48c0 1.1.88 1.98 1.98 1.98 1.1 0 1.98-.88 1.98-1.98C6.96 4.38 6.08 3.5 4.98 3.5zM3.5 8.98h3v11.5h-3v-11.5zM9.5 8.98h2.88v1.58h.04c.4-.76 1.38-1.56 2.85-1.56 3.05 0 3.61 2.01 3.61 4.63v6.85h-3v-6.08c0-1.45-.03-3.33-2.03-3.33-2.03 0-2.34 1.58-2.34 3.21v6.2h-3v-11.5z'/></svg>"""
+mail_svg = """<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='18' height='18'><path fill='currentColor' d='M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4.2-8 4.99-8-4.99V6l8 4.99L20 6v2.2z'/></svg>"""
+
+st.sidebar.markdown(
+    f"""
+    <div class="social-row">
+      <a class="social-btn" href="{GITHUB_URL}" target="_blank" title="GitHub">{github_svg}</a>
+      <a class="social-btn" href="{LINKEDIN_URL}" target="_blank" title="LinkedIn">{linkedin_svg}</a>
+      <a class="social-btn" href="mailto:{EMAIL}" title="Email">{mail_svg}</a>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.sidebar.markdown("<div style='margin-top:8px;color:#bfefff;font-size:13px;'>", unsafe_allow_html=True)
+st.sidebar.markdown(f"<small style='color:#bfefff'>Email: <a href='mailto:{EMAIL}' style='color:{ACCENT};text-decoration:none;'>{EMAIL}</a></small><br>", unsafe_allow_html=True)
+st.sidebar.markdown(f"<small style='color:#bfefff'>LinkedIn: <a href='{LINKEDIN_URL}' target='_blank' style='color:{ACCENT};text-decoration:none;'>Profile</a></small><br>", unsafe_allow_html=True)
+st.sidebar.markdown(f"<small style='color:#bfefff'>GitHub: <a href='{GITHUB_URL}' target='_blank' style='color:{ACCENT};text-decoration:none;'>Robin-Jimmichan-Pooppally</a></small>", unsafe_allow_html=True)
+st.sidebar.markdown("</div>", unsafe_allow_html=True)
 st.sidebar.markdown("</div>", unsafe_allow_html=True)
 
 # -----------------------
@@ -577,4 +630,27 @@ if user_input:
 
 # Footer
 st.markdown("---")
-st.markdown("<div class='small-muted'>Built with ❤️ • Portfoli-AI • Contact: rjimmichan@gmail.com</div>", unsafe_allow_html=True)
+st.markdown(f"""
+<div style='display:flex;align-items:center;justify-content:space-between;gap:12px;'>
+  <div class='small-muted'>Built with ❤️ • Portfoli-AI</div>
+  <div style='display:flex;gap:8px;align-items:center;'>
+    <a href="{GITHUB_URL}" target="_blank" style='text-decoration:none;'>
+      <div style='display:inline-flex;padding:6px;border-radius:8px;border:1px solid {ACCENT}33;background:rgba(255,255,255,0.01);box-shadow:0 6px 18px {ACCENT}10;'>
+        <svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='{ACCENT}'><path d='M12 .5C5.65.5.5 5.66.5 12.02c0 5.09 3.29 9.4 7.86 10.93.58.11.79-.25.79-.55 0-.27-.01-1.18-.02-2.14-3.2.69-3.88-1.54-3.88-1.54-.53-1.35-1.3-1.71-1.3-1.71-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.78 2.73 1.27 3.4.97.11-.75.41-1.27.75-1.56-2.56-.29-5.26-1.28-5.26-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.47.11-3.06 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.79 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.6.23 2.78.11 3.06.74.81 1.19 1.85 1.19 3.1 0 4.42-2.71 5.39-5.29 5.67.42.36.79 1.07.79 2.16 0 1.56-.01 2.83-.01 3.22 0 .3.21.67.8.56A11.53 11.53 0 0 0 23.5 12.02C23.5 5.66 18.35.5 12 .5z'/></svg>
+      </div>
+    </a>
+    <a href="{LINKEDIN_URL}" target="_blank" style='text-decoration:none;'>
+      <div style='display:inline-flex;padding:6px;border-radius:8px;border:1px solid {ACCENT}33;background:rgba(255,255,255,0.01);box-shadow:0 6px 18px {ACCENT}10;'>
+        <svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='{ACCENT}'><path d='M4.98 3.5C3.88 3.5 3 4.38 3 5.48c0 1.1.88 1.98 1.98 1.98 1.1 0 1.98-.88 1.98-1.98C6.96 4.38 6.08 3.5 4.98 3.5zM3.5 8.98h3v11.5h-3v-11.5zM9.5 8.98h2.88v1.58h.04c.4-.76 1.38-1.56 2.85-1.56 3.05 0 3.61 2.01 3.61 4.63v6.85h-3v-6.08c0-1.45-.03-3.33-2.03-3.33-2.03 0-2.34 1.58-2.34 3.21v6.2h-3v-11.5z'/></svg>
+      </div>
+    </a>
+    <a href="mailto:{EMAIL}" style='text-decoration:none;'>
+      <div style='display:inline-flex;padding:6px;border-radius:8px;border:1px solid {ACCENT}33;background:rgba(255,255,255,0.01);box-shadow:0 6px 18px {ACCENT}10;'>
+        <svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='{ACCENT}'><path d='M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4.2-8 4.99-8-4.99V6l8 4.99L20 6v2.2z'/></svg>
+      </div>
+    </a>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+# End of file
