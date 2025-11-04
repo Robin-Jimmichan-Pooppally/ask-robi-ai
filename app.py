@@ -68,6 +68,8 @@ st.set_page_config(page_title="Portfoli-AI", page_icon="🤖", layout="wide")
 if "messages" not in st.session_state: st.session_state.messages = []
 if "chat_history" not in st.session_state: st.session_state.chat_history = []
 if "history" not in st.session_state: st.session_state.history = []
+# state for clear confirmation
+if "awaiting_clear" not in st.session_state: st.session_state.awaiting_clear = False
 
 # --- Sticky Header ---
 st.markdown("""
@@ -125,7 +127,7 @@ if not st.session_state.greeted:
     st.session_state.greeted = True
 
 # -----------------------
-# Global CSS (neon + accessibility)
+# Global CSS (neon + accessibility + selectbox/focus tweak)
 # -----------------------
 st.markdown("""
 <style>
@@ -169,16 +171,23 @@ button.stButton>button:hover {
   0% {background-position:-200% 0;}
   100% {background-position:200% 0;}
 }
+/* Make focused selectbox / active project UI use the chatbot blue */
+.stSelectbox [data-baseweb="select"] {
+    border-color: #00bfff !important;
+    box-shadow: 0 0 14px rgba(0,191,255,0.08) !important;
+}
+/* Selected project label inline display color */
+.selected-project-label { color: #00bfff; font-weight:700; }
 .small-muted { color:#98cfe6; font-size:12px; }
 </style>
 """, unsafe_allow_html=True)
 
-# Optional high-contrast mode
+# Optional high-contrast mode (sidebar toggle)
 if st.sidebar.toggle("♿ High Contrast Mode"):
     st.markdown("<style>body{filter:contrast(1.25);}</style>", unsafe_allow_html=True)
 
 # -----------------------
-# Sidebar content
+# Sidebar content (STACKED vertical controls per Option A)
 # -----------------------
 st.sidebar.markdown("<div class='section-card'>", unsafe_allow_html=True)
 st.sidebar.markdown(f"### 👋 {context['owner_name']}")
@@ -196,11 +205,37 @@ for k, v in summary.items():
     st.sidebar.markdown(f"- **{k}**: {v}")
 st.sidebar.markdown("</div>", unsafe_allow_html=True)
 
+# --- NEW: Control panel (stacked) ---
+st.sidebar.markdown("---")
+st.sidebar.markdown("### ⚙️ Controls")
+# TTS toggle moved to sidebar
+tts_sidebar = st.sidebar.checkbox("🔊 Play responses (TTS)", key="tts_sidebar", value=False)
+
+# Clear Chat History with confirmation (stacked)
+if st.sidebar.button("🧹 Clear Chat History"):
+    st.session_state.awaiting_clear = True
+
+if st.session_state.get("awaiting_clear", False):
+    st.sidebar.warning("Are you sure you want to clear the chat history? This cannot be undone.")
+    c1, c2 = st.sidebar.columns(2)
+    if c1.button("Yes, clear"):
+        st.session_state.history = []
+        st.session_state.messages = []
+        st.session_state.chat_history = []
+        st.session_state.awaiting_clear = False
+        st.experimental_rerun()
+    if c2.button("No, cancel"):
+        st.session_state.awaiting_clear = False
+
+# Save Chat History as JSON (download)
+if st.sidebar.button("💾 Save Chat History"):
+    # will reveal download button
+    history_json = json.dumps(st.session_state.get("history", []), indent=2)
+    # Show a download button immediately
+    st.sidebar.download_button("Download JSON", history_json, file_name="chat_history.json", mime="application/json")
+
 # -----------------------
 # (Your existing logic continues below unchanged)
-# -----------------------
-# [No functional edits made here — only accessibility polish above]
-# Everything below (project selection, Groq client, chat, etc.) runs exactly as before.
 # -----------------------
 
 # Prepare projects list (flattened)
@@ -210,7 +245,7 @@ for cat, d in projects_by_cat.items():
     for pname, repo in d.items():
         all_projects.append((cat, pname, repo))
 
-# Category buttons
+# Category buttons (kept as-is but selected label shown in chatbot blue)
 st.markdown("### 🔎 Filter by category")
 cols = st.columns(4)
 cats = list(projects_by_cat.keys())
@@ -223,7 +258,8 @@ if selected_cat: st.session_state.selected_category = selected_cat
 if st.session_state.get("selected_category", "All") == "All":
     st.markdown("Showing projects: **All categories**")
 else:
-    st.markdown(f"Showing projects: **{st.session_state['selected_category']}**")
+    # highlight selected category in the chatbot blue color
+    st.markdown(f"Showing projects: <span class='selected-project-label'>**{st.session_state['selected_category']}**</span>", unsafe_allow_html=True)
 
 def build_project_list(filter_cat):
     choices = []
@@ -330,6 +366,7 @@ if st.session_state.get("selected_project"):
 
 st.markdown("---")
 
+# Render existing history
 for m in st.session_state.history:
     role, text = m.get("role"), m.get("content")
     if role == "user":
@@ -337,38 +374,49 @@ for m in st.session_state.history:
     else:
         st.markdown(f"<div class='chat-bubble-bot' aria-label='Assistant message'><b>{context.get('assistant_name','Portfoli-AI')}:</b> {text}</div>", unsafe_allow_html=True)
 
-tts_toggle = st.checkbox("🔊 Play responses (TTS)", value=False)
-col1, col2 = st.columns([8, 1.2])
-with col1:
-    user_input = st.text_input("Type your message...", key="chat_input", placeholder="Ask me anything...", label_visibility="collapsed")
-with col2:
-    send = st.button("🚀", use_container_width=True)
-    erase = st.button("🧹", use_container_width=True)
+# -----------------------
+# NEW: Chat input using Enter to send (Shift+Enter for newline)
+# -----------------------
+# Read TTS choice from sidebar
+tts_toggle = st.session_state.get("tts_sidebar", False)
 
-if send and user_input.strip():
-    st.session_state.messages.append({"role":"user","content":user_input})
-    st.session_state.chat_history.append({"role":"user","content":user_input})
-    st.rerun()
-if erase:
-    st.session_state.messages = []
-    st.session_state.chat_history = []
-    st.rerun()
+# Use Streamlit chat_input (press Enter to send; Shift+Enter newline)
+user_input = st.chat_input("Type your message and press Enter...")
 
 if user_input:
-    st.session_state.history.append({"role":"user","content":user_input})
+    # Append user message to history
+    st.session_state.history.append({"role": "user", "content": user_input})
+
+    # Immediately display the user's message (keeps UI snappy)
+    st.markdown(f"<div class='chat-bubble-user' aria-label='User message'><b>You:</b> {user_input}</div>", unsafe_allow_html=True)
+
+    # Build messages to send to Groq
     system_prompt = build_system_prompt(st.session_state.chat_mode, st.session_state.get("selected_project"))
-    messages = [{"role":"system","content":system_prompt}] + [
-        {"role":("user" if h["role"]=="user" else "assistant"), "content":h["content"]}
+    messages = [{"role": "system", "content": system_prompt}] + [
+        {"role": ("user" if h["role"] == "user" else "assistant"), "content": h["content"]}
         for h in st.session_state.history[-8:]
     ]
+
+    # Call model and show assistant reply inline using chat message styling
     with st.spinner("Thinking..."):
         try:
             completion = client.chat.completions.create(
-                model="llama-3.3-70b-versatile", messages=messages, temperature=0.25, max_tokens=800)
+                model="llama-3.3-70b-versatile",
+                messages=messages,
+                temperature=0.25,
+                max_tokens=800
+            )
             bot_text = completion.choices[0].message.content.strip()
         except Exception as e:
             bot_text = f"⚠️ Groq API error: {e}"
-    st.session_state.history.append({"role":"assistant","content":bot_text})
+
+    # Display assistant message
+    st.markdown(f"<div class='chat-bubble-bot' aria-label='Assistant message'><b>{context.get('assistant_name','Portfoli-AI')}:</b> {bot_text}</div>", unsafe_allow_html=True)
+
+    # Save assistant message in history
+    st.session_state.history.append({"role": "assistant", "content": bot_text})
+
+    # TTS if enabled
     if tts_toggle:
         speak_text(bot_text)
 
