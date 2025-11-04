@@ -684,32 +684,72 @@ if user_input:
         # TTS if enabled
         if tts_toggle:
             speak_text(bot_text)
+# --- Footer — icons horizontally aligned on the left side (icons-only, glowing, premium look)
+st.markdown("---", unsafe_allow_html=True)
 
-# Footer — icons horizontally aligned on the left side (icons-only, no footer text)
-st.markdown("---")
 st.markdown(f"""
-<div style='display:flex;align-items:center;justify-content:flex-start;gap:12px;padding:6px 10px;'>
-  <div class="footer-icons" style="align-items:center;">
-    <a href="{GITHUB_URL}" target="_blank" style="text-decoration:none;">
-      <div class="footer-icon-btn" title="GitHub" aria-label="GitHub">
-        <!-- stroke-based GitHub -->
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 .5C5.65.5.5 5.66.5 12.02c0 5.09 3.29 9.4 7.86 10.93.58.11.79-.25.79-.55 0-.27-.01-1.18-.02-2.14-3.2.69-3.88-1.54-3.88-1.54-.53-1.35-1.3-1.71-1.3-1.71-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.78 2.73 1.27 3.4.97.11-.75.41-1.27.75-1.56-2.56-.29-5.26-1.28-5.26-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.47.11-3.06 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.79 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.6.23 2.78.11 3.06.74.81 1.19 1.85 1.19 3.1 0 4.42-2.71 5.39-5.29 5.67.42.36.79 1.07.79 2.16 0 1.56-.01 2.83-.01 3.22 0 .3.21.67.8.56A11.53 11.53 0 0 0 23.5 12.02C23.5 5.66 18.35.5 12 .5z"/></svg>
-      </div>
-    </a>
+<div style="
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+    gap:16px;
+    padding:10px 15px;
+    margin-top:10px;
+    margin-bottom:5px;
+">
+  <!-- GitHub -->
+  <a href="{GITHUB_URL}" target="_blank" style="text-decoration:none;">
+    <div class="footer-icon-btn" title="GitHub" aria-label="GitHub">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="22" height="22">
+        <path fill="#00bfff" d="M12 .5C5.65.5.5 5.66.5 12.02c0 5.09 3.29 9.4 7.86 10.93.58.11.79-.25.79-.55 0-.27-.01-1.18-.02-2.14-3.2.69-3.88-1.54-3.88-1.54-.53-1.35-1.3-1.71-1.3-1.71-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.78 2.73 1.27 3.4.97.11-.75.41-1.27.75-1.56-2.56-.29-5.26-1.28-5.26-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.47.11-3.06 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.79 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.6.23 2.78.11 3.06.74.81 1.19 1.85 1.19 3.1 0 4.42-2.71 5.39-5.29 5.67.42.36.79 1.07.79 2.16 0 1.56-.01 2.83-.01 3.22 0 .3.21.67.8.56A11.53 11.53 0 0 0 23.5 12.02C23.5 5.66 18.35.5 12 .5z"/>
+      </svg>
+    </div>
+  </a>
 
-    <a href="{LINKEDIN_URL}" target="_blank" style="text-decoration:none;">
-      <div class="footer-icon-btn" title="LinkedIn" aria-label="LinkedIn">
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4.98 3.5C3.88 3.5 3 4.38 3 5.48c0 1.1.88 1.98 1.98 1.98 1.1 0 1.98-.88 1.98-1.98C6.96 4.38 6.08 3.5 4.98 3.5zM3.5 8.98h3v11.5h-3v-11.5zM9.5 8.98h2.88v1.58h.04c.4-.76 1.38-1.56 2.85-1.56 3.05 0 3.61 2.01 3.61 4.63v6.85h-3v-6.08c0-1.45-.03-3.33-2.03-3.33-2.03 0-2.34 1.58-2.34 3.21v6.2h-3v-11.5z"/></svg>
-      </div>
-    </a>
+  <!-- LinkedIn -->
+  <a href="{LINKEDIN_URL}" target="_blank" style="text-decoration:none;">
+    <div class="footer-icon-btn" title="LinkedIn" aria-label="LinkedIn">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="22" height="22">
+        <path fill="#00bfff" d="M4.98 3.5C3.88 3.5 3 4.38 3 5.48c0 1.1.88 1.98 1.98 1.98 1.1 0 1.98-.88 1.98-1.98C6.96 4.38 6.08 3.5 4.98 3.5zM3.5 8.98h3v11.5h-3v-11.5zM9.5 8.98h2.88v1.58h.04c.4-.76 1.38-1.56 2.85-1.56 3.05 0 3.61 2.01 3.61 4.63v6.85h-3v-6.08c0-1.45-.03-3.33-2.03-3.33-2.03 0-2.34 1.58-2.34 3.21v6.2h-3v-11.5z"/>
+      </svg>
+    </div>
+  </a>
 
-    <a href="mailto:{EMAIL}" style="text-decoration:none;">
-      <div class="footer-icon-btn" title="Email" aria-label="Email">
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4.2-8 4.99-8-4.99V6l8 4.99L20 6v2.2z"/></svg>
-      </div>
-    </a>
-  </div>
+  <!-- Email -->
+  <a href="mailto:{EMAIL}" style="text-decoration:none;">
+    <div class="footer-icon-btn" title="Email" aria-label="Email">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="22" height="22">
+        <path fill="#00bfff" d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4.2-8 4.99-8-4.99V6l8 4.99L20 6v2.2z"/>
+      </svg>
+    </div>
+  </a>
 </div>
+
+<style>
+.footer-icon-btn {{
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: rgba(0, 191, 255, 0.08);
+  box-shadow: 0 0 10px rgba(0, 191, 255, 0.15);
+  transition: all 0.35s ease;
+  animation: fadeIn 1.5s ease-in-out;
+}}
+
+.footer-icon-btn:hover {{
+  background-color: rgba(0, 191, 255, 0.3);
+  box-shadow: 0 0 20px #00bfff, 0 0 30px rgba(0, 122, 204, 0.6);
+  transform: scale(1.15);
+}}
+
+@keyframes fadeIn {{
+  from {{ opacity: 0; transform: translateY(10px); }}
+  to {{ opacity: 1; transform: translateY(0); }}
+}}
+</style>
 """, unsafe_allow_html=True)
 
 # End of file
