@@ -668,7 +668,7 @@ with st.sidebar:
         <a href="https://github.com/Robin-Jimmichan-Pooppally" target="_blank" style="text-decoration:none;">
             <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" width="28" style="filter: drop-shadow(0 0 8px #00ffff);">
         </a>
-        <a href="https://linkedin.com/in/robinjimmichan" target="_blank" style="text-decoration:none;">
+        <a href="https://www.linkedin.com/in/robin-jimmichan-pooppally-676061291/" target="_blank" style="text-decoration:none;">
             <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/linkedin/linkedin-original.svg" width="28" style="filter: drop-shadow(0 0 8px #00ffff);">
         </a>
         <a href="mailto:rjimmichan@gmail.com" target="_blank" style="text-decoration:none;">
