@@ -655,14 +655,12 @@ st.markdown(f"""
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 .5C5.65.5.5 5.66.5 12.02c0 5.09 3.29 9.4 7.86 10.93.58.11.79-.25.79-.55 0-.27-.01-1.18-.02-2.14-3.2.69-3.88-1.54-3.88-1.54-.53-1.35-1.3-1.71-1.3-1.71-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.78 2.73 1.27 3.4.97.11-.75.41-1.27.75-1.56-2.56-.29-5.26-1.28-5.26-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.47.11-3.06 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.79 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.6.23 2.78.11 3.06.74.81 1.19 1.85 1.19 3.1 0 4.42-2.71 5.39-5.29 5.67.42.36.79 1.07.79 2.16 0 1.56-.01 2.83-.01 3.22 0 .3.21.67.8.56A11.53 11.53 0 0 0 23.5 12.02C23.5 5.66 18.35.5 12 .5z"/></svg>
       </div>
     </a>
-
-    <a href="{LINKEDIN_URL}" target="_blank" style="text-decoration:none;">
+     <a href="{LINKEDIN_URL}" target="_blank" style="text-decoration:none;">
       <div class="footer-icon-btn" title="LinkedIn" aria-label="LinkedIn">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4.98 3.5C3.88 3.5 3 4.38 3 5.48c0 1.1.88 1.98 1.98 1.98 1.1 0 1.98-.88 1.98-1.98C6.96 4.38 6.08 3.5 4.98 3.5zM3.5 8.98h3v11.5h-3v-11.5zM9.5 8.98h2.88v1.58h.04c.4-.76 1.38-1.56 2.85-1.56 3.05 0 3.61 2.01 3.61 4.63v6.85h-3v-6.08c0-1.45-.03-3.33-2.03-3.33-2.03 0-2.34 1.58-2.34 3.21v6.2h-3v-11.5z"/></svg>
       </div>
     </a>
-
-    <a href="mailto:{EMAIL}" style="text-decoration:none;">
+     <a href="mailto:{EMAIL}" style="text-decoration:none;">
       <div class="footer-icon-btn" title="Email" aria-label="Email">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4.2-8 4.99-8-4.99V6l8 4.99L20 6v2.2z"/></svg>
       </div>
@@ -671,6 +669,7 @@ st.markdown(f"""
 
   <div class='small-muted'>Built with ❤️ • Portfoli-AI</div>
 </div>
-unsafe_allow_html=True)
 """
+unsafe_allow_html=True)
+
 # End of file
