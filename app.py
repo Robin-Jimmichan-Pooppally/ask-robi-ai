@@ -662,7 +662,7 @@ if user_input:
         if tts_toggle:
             speak_text(bot_text)
 with st.sidebar:
-    st.markdown("### 📞 Contact")
+    st.markdown("")
     st.markdown("""
     <div style='display:flex; justify-content:center; gap:20px; margin-top:10px;'>
         <a href="https://github.com/Robin-Jimmichan-Pooppally" target="_blank" style="text-decoration:none;">
