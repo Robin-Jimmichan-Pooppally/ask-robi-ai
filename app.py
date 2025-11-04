@@ -330,13 +330,6 @@ h1,h2,h3 {{ color:var(--accent); text-shadow:0 0 12px var(--accent); }}
   50% {{ box-shadow: 0 8px 28px rgba(0,0,0,0.25), 0 0 24px rgba(0,191,255,0.06); }}
   100% {{ box-shadow: 0 6px 16px rgba(0,0,0,0.2), 0 0 0 0 rgba(0,191,255,0.0); }}
 }}
-
-.section-card {{
-  background: linear-gradient(180deg, rgba(3,7,18,0.66), rgba(2,6,14,0.56));
-  border-radius: 14px; padding: 14px;
-  border: 1px solid var(--accent)2e;
-  box-shadow: 0 6px 26px var(--accent)10;
-}}
 .chat-bubble-user, .chat-bubble-bot {{
   padding:12px 16px; border-radius:14px; margin:10px 0;
   transition: background 0.22s ease, transform 0.18s ease, box-shadow 0.18s ease;
