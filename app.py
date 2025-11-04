@@ -671,6 +671,6 @@ st.markdown(f"""
 
   <div class='small-muted'>Built with ❤️ • Portfoli-AI</div>
 </div>
-""", unsafe_allow_html=True)
-
+unsafe_allow_html=True)
+"""
 # End of file
