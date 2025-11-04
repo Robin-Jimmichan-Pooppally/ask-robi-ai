@@ -362,6 +362,7 @@ button.stButton>button:hover {{
   transform: translateY(-2px);
   box-shadow: 0 10px 30px var(--accent)22;
   border-color: var(--hover-accent);
+  background: linear-gradient(180deg, rgba(0,191,255,0.1), rgba(0,191,255,0.05));
 }}
 
 .stSelectbox [data-baseweb="select"], select {{
@@ -370,6 +371,30 @@ button.stButton>button:hover {{
 }}
 input[type="radio"], input[type="checkbox"], select {{
   accent-color: var(--accent);
+}}
+
+/* Radio button blue styling */
+[data-testid="stRadio"] {{
+  color: var(--accent);
+}}
+[data-testid="stRadio"] label {{
+  color: #e8f7ff;
+}}
+[data-testid="stRadio"] [role="radio"] {{
+  accent-color: var(--accent) !important;
+  border-color: var(--accent) !important;
+}}
+
+/* Dropdown border and styling */
+.stSelectbox {{
+  color: #e8f7ff;
+}}
+.stSelectbox [data-baseweb="select"] {{
+  border: 1px solid var(--accent) !important;
+  box-shadow: 0 0 18px var(--accent)15 !important;
+}}
+.stSelectbox svg {{
+  fill: var(--accent) !important;
 }}
 
 .selected-project-label {{ color: var(--accent); font-weight:700; }}
@@ -435,7 +460,6 @@ input[type="radio"], input[type="checkbox"], select {{
 # -----------------------
 # Sidebar (EXACT - unchanged structure, enhanced logic)
 # -----------------------
-st.sidebar.markdown("<div class='section-card' style='display:flex;align-items:center;gap:12px;'>", unsafe_allow_html=True)
 st.sidebar.markdown(
     f"""
     <div style='display:flex;align-items:center;gap:12px;'>
@@ -448,7 +472,6 @@ st.sidebar.markdown(
     """,
     unsafe_allow_html=True,
 )
-st.sidebar.markdown("</div>", unsafe_allow_html=True)
 
 # Controls section
 st.sidebar.markdown("<div class='section-card'>", unsafe_allow_html=True)
