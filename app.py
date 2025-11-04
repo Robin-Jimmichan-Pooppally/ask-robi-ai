@@ -384,8 +384,29 @@ input[type="radio"], input[type="checkbox"], select {{
   accent-color: var(--accent) !important;
   border-color: var(--accent) !important;
 }}
+[data-testid="stRadio"] input[type="radio"] {{
+  accent-color: var(--accent) !important;
+}}
 
-/* Dropdown border and styling */
+/* Category buttons - remove red on hover/select */
+button {{
+  background-color: transparent !important;
+}}
+button:hover {{
+  background-color: rgba(0, 191, 255, 0.1) !important;
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+}}
+button:focus {{
+  background-color: rgba(0, 191, 255, 0.1) !important;
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+}}
+button[kind="secondary"]:hover {{
+  background-color: rgba(0, 191, 255, 0.15) !important;
+  border: 1px solid var(--accent) !important;
+  color: var(--accent) !important;
+}}
 .stSelectbox {{
   color: #e8f7ff;
 }}
