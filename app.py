@@ -13,11 +13,15 @@ import requests
 import json
 import os
 import textwrap
+import re
 from urllib.parse import urlparse
 
 # Import your verified context (must match what we finalized)
 from robi_context import context
 
+# -----------------------
+# Helper: build system prompt
+# -----------------------
 def build_system_prompt(chat_mode, selected_project=None):
     """
     Build the system prompt based on chat mode and selected project.
@@ -63,13 +67,14 @@ def build_system_prompt(chat_mode, selected_project=None):
 st.set_page_config(page_title="Portfoli-AI", page_icon="🤖", layout="wide")
 
 # -----------------------
-# Session state
+# Session state defaults
 # -----------------------
 if "messages" not in st.session_state: st.session_state.messages = []
 if "chat_history" not in st.session_state: st.session_state.chat_history = []
 if "history" not in st.session_state: st.session_state.history = []
-# state for clear confirmation
 if "awaiting_clear" not in st.session_state: st.session_state.awaiting_clear = False
+# code blocks parsed from README
+if "code_blocks" not in st.session_state: st.session_state.code_blocks = []
 
 # --- Sticky Header ---
 st.markdown("""
@@ -127,7 +132,7 @@ if not st.session_state.greeted:
     st.session_state.greeted = True
 
 # -----------------------
-# Global CSS (neon + accessibility + selectbox/focus tweak)
+# Global CSS (neon + accessibility + selectbox/focus tweak + code bubble)
 # -----------------------
 st.markdown("""
 <style>
@@ -155,29 +160,26 @@ button.stButton>button {
 }
 button.stButton>button:hover {
   transform: scale(1.03);
-  box-shadow: 0 0 10px rgba(0,255,255,0.4);
+  box-shadow: 0 0 10px rgba(0,191,255,0.4);
 }
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #00ffff, #0044ff);
-  border-radius: 10px;
-}
-.skeleton {
-  background: linear-gradient(90deg,#1a1a1a 25%,#2a2a2a 50%,#1a1a1a 75%);
-  background-size:200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-@keyframes shimmer {
-  0% {background-position:-200% 0;}
-  100% {background-position:200% 0;}
-}
-/* Make focused selectbox / active project UI use the chatbot blue */
-.stSelectbox [data-baseweb="select"] {
-    border-color: #00bfff !important;
-    box-shadow: 0 0 14px rgba(0,191,255,0.08) !important;
-}
+/* Category button hover tune (chatbot blue) */
+button.stButton>button:hover { outline: 0; box-shadow: 0 0 18px rgba(0,191,255,0.12); border-color: #00bfff; }
+/* Selectbox focus / active uses chatbot blue */
+.stSelectbox [data-baseweb="select"] { border-color: #00bfff !important; box-shadow: 0 0 14px rgba(0,191,255,0.08) !important; }
 /* Selected project label inline display color */
 .selected-project-label { color: #00bfff; font-weight:700; }
+/* Styled code bubble for README snippets (neon-blue accent) */
+.code-bubble {
+  background: rgba(3,8,15,0.9);
+  border-left: 3px solid #00bfff;
+  padding: 10px;
+  margin: 8px 0;
+  border-radius: 8px;
+  font-family: monospace;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+/* small muted text */
 .small-muted { color:#98cfe6; font-size:12px; }
 </style>
 """, unsafe_allow_html=True)
@@ -186,32 +188,16 @@ button.stButton>button:hover {
 if st.sidebar.toggle("♿ High Contrast Mode"):
     st.markdown("<style>body{filter:contrast(1.25);}</style>", unsafe_allow_html=True)
 
+
 # -----------------------
-# Sidebar content (STACKED vertical controls per Option A)
+# Sidebar: Controls → Portfolio → Contact (reordered)
 # -----------------------
+# Controls section (stacked)
 st.sidebar.markdown("<div class='section-card'>", unsafe_allow_html=True)
-st.sidebar.markdown(f"### 👋 {context['owner_name']}")
-st.sidebar.markdown(f"**{context['owner_role']}**")
-st.sidebar.markdown("---")
-st.sidebar.markdown("📬 **Contact**")
-st.sidebar.markdown(f"- Email: <a href='mailto:rjimmichan@gmail.com'>rjimmichan@gmail.com</a>", unsafe_allow_html=True)
-st.sidebar.markdown(f"- LinkedIn: <a href='https://www.linkedin.com/in/robin-jimmichan-pooppally-676061291'>Profile</a>", unsafe_allow_html=True)
-st.sidebar.markdown(f"- GitHub: <a href='https://github.com/Robin-Jimmichan-Pooppally'>Robin-Jimmichan-Pooppally</a>", unsafe_allow_html=True)
-st.sidebar.markdown("---")
-
-summary = context.get("summary", {})
-st.sidebar.markdown("### 📊 Portfolio Overview")
-for k, v in summary.items():
-    st.sidebar.markdown(f"- **{k}**: {v}")
-st.sidebar.markdown("</div>", unsafe_allow_html=True)
-
-# --- NEW: Control panel (stacked) ---
-st.sidebar.markdown("---")
 st.sidebar.markdown("### ⚙️ Controls")
-# TTS toggle moved to sidebar
 tts_sidebar = st.sidebar.checkbox("🔊 Play responses (TTS)", key="tts_sidebar", value=False)
 
-# Clear Chat History with confirmation (stacked)
+# Clear Chat History with confirmation
 if st.sidebar.button("🧹 Clear Chat History"):
     st.session_state.awaiting_clear = True
 
@@ -229,10 +215,29 @@ if st.session_state.get("awaiting_clear", False):
 
 # Save Chat History as JSON (download)
 if st.sidebar.button("💾 Save Chat History"):
-    # will reveal download button
     history_json = json.dumps(st.session_state.get("history", []), indent=2)
-    # Show a download button immediately
     st.sidebar.download_button("Download JSON", history_json, file_name="chat_history.json", mime="application/json")
+
+st.sidebar.markdown("</div>", unsafe_allow_html=True)
+
+# Portfolio section (stacked)
+st.sidebar.markdown("<div class='section-card'>", unsafe_allow_html=True)
+st.sidebar.markdown(f"### 👋 {context['owner_name']}")
+st.sidebar.markdown(f"**{context['owner_role']}**")
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 📊 Portfolio Overview")
+summary = context.get("summary", {})
+for k, v in summary.items():
+    st.sidebar.markdown(f"- **{k}**: {v}")
+st.sidebar.markdown("</div>", unsafe_allow_html=True)
+
+# Contact section (stacked)
+st.sidebar.markdown("<div class='section-card'>", unsafe_allow_html=True)
+st.sidebar.markdown("### 📬 Contact")
+st.sidebar.markdown(f"- Email: <a href='mailto:rjimmichan@gmail.com'>rjimmichan@gmail.com</a>", unsafe_allow_html=True)
+st.sidebar.markdown(f"- LinkedIn: <a href='https://www.linkedin.com/in/robin-jimmichan-pooppally-676061291'>Profile</a>", unsafe_allow_html=True)
+st.sidebar.markdown(f"- GitHub: <a href='https://github.com/Robin-Jimmichan-Pooppally'>Robin-Jimmichan-Pooppally</a>", unsafe_allow_html=True)
+st.sidebar.markdown("</div>", unsafe_allow_html=True)
 
 # -----------------------
 # (Your existing logic continues below unchanged)
@@ -245,22 +250,26 @@ for cat, d in projects_by_cat.items():
     for pname, repo in d.items():
         all_projects.append((cat, pname, repo))
 
-# Category buttons (kept as-is but selected label shown in chatbot blue)
+# Category buttons
 st.markdown("### 🔎 Filter by category")
 cols = st.columns(4)
 cats = list(projects_by_cat.keys())
 ordered = [c for c in ["Excel", "Power BI", "Python", "SQL"] if c in cats] or cats
 selected_cat = None
 for i, cat in enumerate(ordered):
-    if cols[i % 4].button(cat): selected_cat = cat
-if "selected_category" not in st.session_state: st.session_state.selected_category = "All"
-if selected_cat: st.session_state.selected_category = selected_cat
+    if cols[i % 4].button(cat):
+        selected_cat = cat
+if "selected_category" not in st.session_state:
+    st.session_state.selected_category = "All"
+if selected_cat:
+    st.session_state.selected_category = selected_cat
+
 if st.session_state.get("selected_category", "All") == "All":
     st.markdown("Showing projects: **All categories**")
 else:
-    # highlight selected category in the chatbot blue color
     st.markdown(f"Showing projects: <span class='selected-project-label'>**{st.session_state['selected_category']}**</span>", unsafe_allow_html=True)
 
+# Build dropdown project list filtered by the selected category
 def build_project_list(filter_cat):
     choices = []
     for cat, pname, repo in all_projects:
@@ -296,29 +305,60 @@ def init_groq():
         st.stop()
 client = init_groq()
 
-# Helper: fetch README
+# -----------------------
+# Helper: fetch README (unchanged)
+# -----------------------
 def extract_owner_repo(repo_url):
-    from urllib.parse import urlparse
     parsed = urlparse(repo_url)
     parts = parsed.path.strip("/").split("/")
-    return (parts[0], parts[1]) if len(parts) >= 2 else (None, None)
+    if len(parts) >= 2:
+        return parts[0], parts[1]
+    return None, None
 
 def fetch_readme_lines(repo_url, max_lines=20):
     owner, repo = extract_owner_repo(repo_url)
     if not owner: return None, "Invalid repo URL"
+    raw_main = f"https://raw.githubusercontent.com/{owner}/{repo}/main/README.md"
+    raw_master = f"https://raw.githubusercontent.com/{owner}/{repo}/master/README.md"
     headers = {"Accept": "application/vnd.github.v3.raw"}
-    for url in (f"https://raw.githubusercontent.com/{owner}/{repo}/main/README.md",
-                f"https://raw.githubusercontent.com/{owner}/{repo}/master/README.md"):
+    for url in (raw_main, raw_master):
         try:
             r = requests.get(url, headers=headers, timeout=8)
             if r.status_code == 200 and r.text.strip():
                 lines = r.text.splitlines()
-                return "\n".join(lines[:max_lines]), r.text
+                preview = "\n".join(lines[:max_lines])
+                full = r.text
+                return preview, full
         except Exception:
             continue
     return None, None
 
-# TTS
+# -----------------------
+# NEW: Extract fenced code blocks from README using regex (literal match)
+# -----------------------
+def extract_code_blocks_from_readme(readme_text):
+    """
+    Returns a list of dicts: { 'lang': 'python'|'sql'|'dax'|..., 'code': '...' }
+    Uses a safe regex that matches fenced code blocks like:
+    ```python
+    ...
+    ```
+    or ```sql ... ```
+    """
+    blocks = []
+    if not readme_text:
+        return blocks
+    # Matches ```lang\n...``` (lang optional)
+    pattern = re.compile(r"```([\w\-\+]+)?\n(.*?)```", re.DOTALL | re.IGNORECASE)
+    for m in pattern.finditer(readme_text):
+        lang = (m.group(1) or "").strip().lower()
+        code = m.group(2).rstrip()
+        blocks.append({"lang": lang, "code": code})
+    return blocks
+
+# -----------------------
+# TTS helper (unchanged)
+# -----------------------
 def speak_text(text):
     try:
         tts = gTTS(text=text, lang="en", slow=False)
@@ -327,31 +367,46 @@ def speak_text(text):
     except Exception as e:
         st.warning("TTS unavailable: " + str(e))
 
-# Chat logic (unchanged)
+# -----------------------
+# Chat & README sync logic
+# -----------------------
 if "history" not in st.session_state: st.session_state.history = []
 if "selected_project" not in st.session_state: st.session_state.selected_project = None
 if "readme_full" not in st.session_state: st.session_state.readme_full = None
 if "readme_preview" not in st.session_state: st.session_state.readme_preview = None
 if "show_more" not in st.session_state: st.session_state.show_more = False
 
+# When project selection changes -> load README preview and reset chat for that project
 if project_choice and project_choice != "(none)":
     cat, pname = project_choice.split(" — ", 1)
-    repo_url = next((r for c, n, r in all_projects if c == cat and n == pname), None)
+    repo_url = None
+    for c, name, r in all_projects:
+        if c == cat and name == pname:
+            repo_url = r
+            break
     if st.session_state.get("selected_project") != repo_url:
         st.session_state.selected_project = repo_url
         st.session_state.history = []
-        st.session_state.readme_preview, st.session_state.readme_full = fetch_readme_lines(repo_url, 20)
+        st.session_state.readme_preview, st.session_state.readme_full = fetch_readme_lines(repo_url, max_lines=20)
+        # Parse code blocks immediately after fetching README
+        st.session_state.code_blocks = extract_code_blocks_from_readme(st.session_state.readme_full)
         st.session_state.show_more = False
 
+# Display selected project card above chat
 if st.session_state.get("selected_project"):
     repo_url = st.session_state.selected_project
-    card_cat, card_name = next(((c, n) for c, n, r in all_projects if r == repo_url), (None, None))
+    card_cat = card_name = None
+    for c, name, r in all_projects:
+        if r == repo_url:
+            card_cat, card_name = c, name
+            break
     st.markdown("<div class='section-card'>", unsafe_allow_html=True)
     st.markdown(f"### 📁 {card_name}")
     st.markdown(f"**Category:** {card_cat}  ")
     st.markdown(f"🔗 **Repo:** [{repo_url}]({repo_url})")
     if st.session_state.get("readme_preview"):
-        st.markdown("---"); st.markdown("**README preview:**")
+        st.markdown("---")
+        st.markdown("**README preview:**")
         st.code(st.session_state["readme_preview"], language="markdown")
         if st.session_state.get("readme_full"):
             if st.button("Show more" if not st.session_state.show_more else "Show less"):
@@ -376,49 +431,97 @@ for m in st.session_state.history:
 
 # -----------------------
 # NEW: Chat input using Enter to send (Shift+Enter for newline)
+#       and README code/DAX literal extraction before calling Groq
 # -----------------------
-# Read TTS choice from sidebar
 tts_toggle = st.session_state.get("tts_sidebar", False)
 
 # Use Streamlit chat_input (press Enter to send; Shift+Enter newline)
 user_input = st.chat_input("Type your message and press Enter...")
 
-if user_input:
-    # Append user message to history
-    st.session_state.history.append({"role": "user", "content": user_input})
+# keywords -> code language mapping for simple detection
+code_keyword_map = {
+    "dax": ["dax", "measure", "measures", "powerbi", "power bi"],
+    "sql": ["sql", "query", "select", "where", "join"],
+    "python": ["python", "py", ".py", "script"],
+    "m": ["m", "m query", "powerquery", "m-query"],
+    "json": ["json"]
+}
 
-    # Immediately display the user's message (keeps UI snappy)
+def detect_requested_lang(user_text):
+    u = user_text.lower()
+    for lang, keys in code_keyword_map.items():
+        for k in keys:
+            if k in u:
+                return lang
+    return None
+
+def find_code_blocks_for_lang(lang):
+    """
+    Return list of code strings matching lang (or empty list).
+    If lang is None, return all code blocks.
+    """
+    blocks = st.session_state.get("code_blocks", []) or []
+    if not lang:
+        return blocks
+    matches = [b for b in blocks if b.get("lang", "") == lang]
+    # also accept common synonyms (e.g., 'powerquery' stored as 'm' or plain)
+    if not matches and lang == "m":
+        matches = [b for b in blocks if b.get("lang", "") in ("m", "powerquery", "power-query")]
+    return matches
+
+if user_input:
+    # Append user message to history and display immediately
+    st.session_state.history.append({"role": "user", "content": user_input})
     st.markdown(f"<div class='chat-bubble-user' aria-label='User message'><b>You:</b> {user_input}</div>", unsafe_allow_html=True)
 
-    # Build messages to send to Groq
-    system_prompt = build_system_prompt(st.session_state.chat_mode, st.session_state.get("selected_project"))
-    messages = [{"role": "system", "content": system_prompt}] + [
-        {"role": ("user" if h["role"] == "user" else "assistant"), "content": h["content"]}
-        for h in st.session_state.history[-8:]
-    ]
+    # Check if user asked for code/DAX/SQL/Python literal from README
+    requested_lang = detect_requested_lang(user_input)
+    code_matches = []
+    if requested_lang:
+        code_matches = find_code_blocks_for_lang(requested_lang)
 
-    # Call model and show assistant reply inline using chat message styling
-    with st.spinner("Thinking..."):
-        try:
-            completion = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=messages,
-                temperature=0.25,
-                max_tokens=800
-            )
-            bot_text = completion.choices[0].message.content.strip()
-        except Exception as e:
-            bot_text = f"⚠️ Groq API error: {e}"
+    # If user explicitly asked for "show code" and there are matches -> return exact snippets (no Groq)
+    if requested_lang and code_matches:
+        # Styled code bubble header
+        st.markdown(f"<div class='code-bubble'><b>Exact `{requested_lang}` snippet(s) from README:</b>\n\n", unsafe_allow_html=True)
+        # Show up to first 5 matches to avoid overwhelming the UI
+        for idx, blk in enumerate(code_matches[:5], start=1):
+            lang_label = blk.get("lang") or "code"
+            code_text = blk.get("code", "")
+            # Render code inside markdown triple-backticks inside the styled bubble
+            st.markdown(f"<div class='code-bubble'><b>Snippet {idx} — {lang_label}</b>\n\n```{lang_label}\n{code_text}\n```</div>", unsafe_allow_html=True)
+        # End (do not call Groq)
+        st.session_state.history.append({"role": "assistant", "content": f"Displayed {len(code_matches[:5])} snippet(s) from README (language: {requested_lang})."})
+        # TTS of a brief message (if enabled) — keep it short
+        if tts_toggle:
+            speak_text(f"Displayed {len(code_matches[:5])} {requested_lang} snippet{'s' if len(code_matches)>1 else ''} from the README.")
+    else:
+        # No direct code match or user didn't request code explicitly — fallback to regular Groq response
+        system_prompt = build_system_prompt(st.session_state.chat_mode, st.session_state.get("selected_project"))
+        messages = [{"role": "system", "content": system_prompt}] + [
+            {"role": ("user" if h["role"] == "user" else "assistant"), "content": h["content"]}
+            for h in st.session_state.history[-8:]
+        ]
 
-    # Display assistant message
-    st.markdown(f"<div class='chat-bubble-bot' aria-label='Assistant message'><b>{context.get('assistant_name','Portfoli-AI')}:</b> {bot_text}</div>", unsafe_allow_html=True)
+        with st.spinner("Thinking..."):
+            try:
+                completion = client.chat.completions.create(
+                    model="llama-3.3-70b-versatile",
+                    messages=messages,
+                    temperature=0.25,
+                    max_tokens=800
+                )
+                bot_text = completion.choices[0].message.content.strip()
+            except Exception as e:
+                bot_text = f"⚠️ Groq API error: {e}"
 
-    # Save assistant message in history
-    st.session_state.history.append({"role": "assistant", "content": bot_text})
+        # Display assistant message and save to history
+        st.markdown(f"<div class='chat-bubble-bot' aria-label='Assistant message'><b>{context.get('assistant_name','Portfoli-AI')}:</b> {bot_text}</div>", unsafe_allow_html=True)
+        st.session_state.history.append({"role": "assistant", "content": bot_text})
 
-    # TTS if enabled
-    if tts_toggle:
-        speak_text(bot_text)
+        # TTS if enabled
+        if tts_toggle:
+            speak_text(bot_text)
 
 # Footer
 st.markdown("---")
